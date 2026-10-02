@@ -1,0 +1,7 @@
+package modmarine.app;
+/** Desktop stand-in with the same key constants (help-image rendering only). */
+final class GameView {
+    static final int K_UP = -1, K_DOWN = -2, K_LEFT = -3, K_RIGHT = -4, K_FIRE = -5,
+            K_MENU = -6, K_MAP = -7, K_CLR = -8, K_STRAFE_L = '1', K_STRAFE_R = '3',
+            K_WPN_PREV = '*', K_WPN_NEXT = '7', K_WAIT = '9';
+}

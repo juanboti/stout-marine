@@ -1,0 +1,28 @@
+Stout Marine - open source notices
+
+Stout Marine is released under the MIT licence. It includes no game files.
+
+The QCELP speech decoder (brewemu.audio.Qcelp) is a Java port of FFmpeg's
+libavcodec QCELP decoder (Copyright (c) 2007 Reynaldo H. Verdejo Pinochet and the
+FFmpeg developers) and is licensed under the GNU Lesser General Public License,
+version 2.1 or later (LICENSE-LGPL-2.1.txt). Its complete source code is part of
+the Stout Marine source package.
+
+The xBR picture filter (brewemu.video.Xbr) is a Java port of FFmpeg's xbr filter,
+based on Hyllian's xBR (Copyright (c) 2011, 2012 Hyllian/Jararaca; Copyright (c)
+2014 Arwa Arif), also licensed under the GNU Lesser General Public License,
+version 2.1 or later. Its complete source code is part of the source package.
+
+The hq picture filter (brewemu.video.Hqx) is a Java port of FFmpeg's hqx filter
+(Copyright (c) 2014 Clement Boesch; hqx designed by Maxim Stepin), used under this
+licence:
+  Permission to use, copy, modify, and/or distribute this software for any
+  purpose with or without fee is hereby granted, provided that the above
+  copyright notice and this permission notice appear in all copies.
+  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.

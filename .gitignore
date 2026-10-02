@@ -1,0 +1,9 @@
+build/
+*.keystore
+*.jks
+*.apk
+*.idsig
+# game files are never part of this project
+*.mod
+*.bar
+doomrpg*.zip
