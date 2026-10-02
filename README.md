@@ -1,3 +1,5 @@
+<p align="center"><img src="apk/res/drawable-nodpi/logo.png" width="220" alt="Stout Marine logo"></p>
+
 # Stout Marine
 
 Made by Juan Aponte. An unofficial fan project, not affiliated with the owners of Doom RPG or with
@@ -23,6 +25,15 @@ They are copied into the app's private storage and never leave the phone.
 
 Updates install over the previous version and keep your saved games. Your saved games can also be
 exported to a `.zip` and imported again (settings, Export / Import saved games).
+
+## How it looks
+
+| Touch controls (phone) | Handheld mode | Door codes on a handheld |
+| :---: | :---: | :---: |
+| <img src="apk/res/drawable-nodpi/help_controls.png" width="260" alt="Touch controls"> | <img src="apk/res/drawable-nodpi/help_handheld.png" width="260" alt="Handheld mode"> | <img src="apk/res/drawable-nodpi/help_bigkeypad.png" width="260" alt="Big keypad"> |
+| 1 gear, 2 weapon, 3 keypad, 4 map, 5 cross (walk, turn), 6 L / R side-step, 7 wait, 8 fire | the game in the middle at a sharp size, a button guide beside it | big number keys, worked with the d-pad and A |
+
+(These pictures show only the app's own controls; the game itself is not shown.)
 
 ## Controls
 
