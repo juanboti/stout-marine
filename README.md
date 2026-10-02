@@ -3,7 +3,7 @@
 # Stout Marine
 
 Made by Juan Aponte. An unofficial fan project, not affiliated with the owners of Doom RPG or with
-Qualcomm (BREW). (Formerly called MOD Marine.)
+Qualcomm (BREW).
 
 An Android player for the BREW version of Doom RPG, with pixel-art touch controls.
 
