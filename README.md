@@ -42,7 +42,6 @@ screen size, handheld mode, and export / import of saved games.
 | :---: | :---: |
 | <img src="docs/settings.png" width="300" alt="Stout Marine settings"> | <img src="docs/settings_picture.png" width="300" alt="Picture setting"> |
 
-(These pictures show only the app's own controls and settings; the game itself is not shown.)
 
 ## Controls
 
