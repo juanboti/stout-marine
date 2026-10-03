@@ -33,7 +33,16 @@ exported to a `.zip` and imported again (settings, Export / Import saved games).
 | <img src="apk/res/drawable-nodpi/help_controls.png" width="260" alt="Touch controls"> | <img src="apk/res/drawable-nodpi/help_handheld.png" width="260" alt="Handheld mode"> | <img src="apk/res/drawable-nodpi/help_bigkeypad.png" width="260" alt="Big keypad"> |
 | 1 gear, 2 weapon, 3 keypad, 4 map, 5 cross (walk, turn), 6 L / R side-step, 7 wait, 8 fire | the game in the middle at a sharp size, a button guide beside it | big number keys, worked with the d-pad and A |
 
-(These pictures show only the app's own controls; the game itself is not shown.)
+### Settings
+
+Hold the gear (or B on a controller) for Stout Marine's own settings: help, picture filter, vibration,
+screen size, handheld mode, and export / import of saved games.
+
+| Settings | Picture choices |
+| :---: | :---: |
+| <img src="docs/settings.png" width="300" alt="Stout Marine settings"> | <img src="docs/settings_picture.png" width="300" alt="Picture setting"> |
+
+(These pictures show only the app's own controls and settings; the game itself is not shown.)
 
 ## Controls
 
