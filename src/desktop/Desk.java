@@ -31,6 +31,7 @@ public class Desk {
             }
             public int playMidi(byte[] smf, int volume) { System.out.println("[" + now[0] + "] [midi " + smf.length + " vol " + volume + "]"); return -1; }
             public void stopSound(int h) { mixer.stop(h); }
+            public void setVolume(int h, int v) { mixer.setVolume(h, v); }
             public boolean soundPlaying(int h) { return mixer.playing(h); }
             public void log(String s) { System.out.println("[" + now[0] + "] " + s); }
             public void closeApplet() { System.out.println("closeApplet"); }

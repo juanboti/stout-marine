@@ -17,7 +17,7 @@ They are copied into the app's private storage and never leave the phone.
 
 ## Installing
 
-1. Download `StoutMarine-1.8.apk` from the release page and open it on your Android phone or handheld
+1. Download the `.apk` from the latest release (for example `StoutMarine-1.8.2.apk`) and open it on your Android phone or handheld
    (Android 5.0 or newer). Android will ask you to allow installing apps from that source.
 2. Open Stout Marine and tap **Choose game file**: pick the `.zip` of your own copy of the BREW
    version of Doom RPG (it must contain `doomrpg.mod` and `doomrpg.bar`).

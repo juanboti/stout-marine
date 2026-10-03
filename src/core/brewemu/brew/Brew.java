@@ -356,9 +356,10 @@ public final class Brew implements Cpu.TrapHandler {
             case 36: return atoi(m.cstr(a0));                    // ATOI
             case 39: host.log("DBG " + Fmt.format(m, m.cstr(a0), varargs(1, 0))); return 0;   // DBGPRINTF
             case 42: for (int i = 0; i < a1; i++) m.write8(a0 + i, rnd.nextInt(256)); return 0; // GETRAND
-            case 43: return (int) (System.currentTimeMillis() / 1000L - 315964800L
-                    + java.util.TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 1000);   // GETTIMESECONDS
+            case 43: return getTimeMs();                         // GETTIMEMS: milliseconds since local midnight
             case 44: return (int) clock.uptimeMs();             // GETUPTIMEMS
+            case 45: return (int) (System.currentTimeMillis() / 1000L - 315964800L
+                    + java.util.TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 1000);   // GETTIMESECONDS
             case 48: return app;                                 // GETAPPINSTANCE
             case 51: return strncmp(a0, a1, a2);                 // STRNCMP
             case 80: {  // VSNPRINTF(buf, size, fmt, va_list)
@@ -375,6 +376,20 @@ public final class Brew implements Cpu.TrapHandler {
                 report(K_HELPER, slot, "helper " + slot);
                 return 0;
         }
+    }
+
+    /**
+     * GETTIMEMS: time of day in milliseconds (local time). It moves on with the emulator's clock from the time of
+     * day at the first call, so it pauses with the game. Doom RPG uses it to animate fires and other scenery.
+     */
+    private long dayMsBase = Long.MIN_VALUE;
+    private int getTimeMs() {
+        final long day = 86400000L;
+        if (dayMsBase == Long.MIN_VALUE) {
+            long now = System.currentTimeMillis();
+            dayMsBase = (now + java.util.TimeZone.getDefault().getOffset(now)) % day - clock.uptimeMs();
+        }
+        return (int) (((dayMsBase + clock.uptimeMs()) % day + day) % day);
     }
 
     private int strncmp(int a, int b2, int n) {

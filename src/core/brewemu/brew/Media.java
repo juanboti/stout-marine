@@ -31,7 +31,11 @@ final class Media extends BObj {
                     clip = load(data, size);
                     return clip != null ? Brew.SUCCESS : Brew.EUNSUPPORTED;
                 }
-                if (parm == PARM_VOLUME) { volume = Math.max(0, Math.min(100, p1)); return Brew.SUCCESS; }
+                if (parm == PARM_VOLUME) {
+                    volume = Math.max(0, Math.min(100, p1));
+                    if (handle >= 0) b.host.setVolume(handle, volume);   // as on the phone: heard at once, also mid-song
+                    return Brew.SUCCESS;
+                }
                 return Brew.EUNSUPPORTED;
             }
             case 5: {   // GetMediaParm(parm, p1*, p2*)

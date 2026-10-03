@@ -36,6 +36,12 @@ public final class Mixer {
         return v.handle;
     }
 
+    /** Changes the volume (0..100) of a playing clip. */
+    public synchronized void setVolume(int handle, int volume) {
+        int g = Math.max(0, Math.min(100, volume)) * 65536 / 100;
+        for (int i = 0; i < voices.size(); i++) if (voices.get(i).handle == handle) voices.get(i).gain = g;
+    }
+
     public synchronized void stop(int handle) {
         for (int i = voices.size() - 1; i >= 0; i--) if (voices.get(i).handle == handle) voices.remove(i);
     }

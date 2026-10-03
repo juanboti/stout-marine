@@ -15,6 +15,8 @@ public interface Host {
     /** Plays a Standard MIDI File; volume 0..100. Returns a handle (>= 0) or -1. */
     int playMidi(byte[] smf, int volume);
     void stopSound(int handle);
+    /** Changes the volume (0..100) of a clip that is already playing. */
+    void setVolume(int handle, int volume);
     /** True while the clip is still playing. */
     boolean soundPlaying(int handle);
     void log(String s);

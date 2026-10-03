@@ -215,6 +215,13 @@ final class AndroidHost implements Host {
         else mixer.stop(handle);
     }
 
+    public synchronized void setVolume(int handle, int volume) {
+        float v = Math.max(0, Math.min(100, volume)) / 100f;
+        if (handle < MIDI_BASE) { mixer.setVolume(handle, volume); return; }
+        Song s = songs.get(handle);
+        if (s != null) try { s.mp.setVolume(v, v); } catch (Throwable e) { /* already released */ }
+    }
+
     public synchronized boolean soundPlaying(int handle) {
         if (handle < MIDI_BASE) return mixer.playing(handle);
         Song s = songs.get(handle);

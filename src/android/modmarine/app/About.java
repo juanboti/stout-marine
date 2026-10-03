@@ -28,10 +28,10 @@ final class About {
 
     /** Shown once after an update (keep in step with CHANGES.md). */
     static final String WHATS_NEW =
-          "\u2022 New Picture setting (hold the gear or B, then Picture): Sharp pixels, Smooth, "
-        + "Smart upscale (hq) or xBR upscale.\n\n"
-        + "\u2022 Smart upscale smooths jagged edges but keeps the pixel look; xBR is rounder, more like a drawing.\n\n"
-        + "\u2022 Your old Smooth pixels choice is kept. Only the picture changes, not the game.";
+          "\u2022 Fixed: the game's Volume setting (Options) now changes music that is already playing, as on the original phone.\n\n"
+        + "\u2022 From 1.8.1: fires and other animated scenery move, as on the original phone.\n\n"
+        + "\u2022 From 1.8: Picture setting (hold the gear or B, then Picture): Sharp pixels, Smooth, "
+        + "Smart upscale (hq) or xBR upscale.";
 
     static void showWhatsNew(Activity a) {
         new AlertDialog.Builder(a, android.R.style.Theme_DeviceDefault_Dialog_Alert)

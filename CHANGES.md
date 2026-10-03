@@ -1,5 +1,14 @@
 # Changes
 
+## 1.8.2
+- Fixed: the game's own Volume setting (Options, Volume) now changes the music and sounds that are already
+  playing, as on the original phone. Before, music kept its old volume until the next song started.
+
+## 1.8.1
+- Fixed: fires (the ones you put out with the extinguisher) and other animated scenery stood still. The game
+  asks the phone for the time of day in milliseconds (BREW's GETTIMEMS) to animate them, and Stout Marine
+  answered with seconds. It now answers in milliseconds, so they animate as on the original phone.
+
 ## 1.8
 - Picture setting with four choices: Sharp pixels (default), Smooth, Smart upscale (hq) and xBR upscale.
   The two upscale filters are Java ports of FFmpeg's hqx (ISC licence) and xbr (LGPL) filters and give
