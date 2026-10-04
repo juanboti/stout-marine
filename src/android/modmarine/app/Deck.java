@@ -9,7 +9,7 @@ final class Deck {
     static final int K_UP = GameView.K_UP, K_DOWN = GameView.K_DOWN, K_LEFT = GameView.K_LEFT, K_RIGHT = GameView.K_RIGHT,
             K_FIRE = GameView.K_FIRE, K_MENU = GameView.K_MENU, K_MAP = GameView.K_MAP, K_STRAFE_L = GameView.K_STRAFE_L,
             K_STRAFE_R = GameView.K_STRAFE_R, K_WPN_PREV = GameView.K_WPN_PREV, K_WPN_NEXT = GameView.K_WPN_NEXT,
-            K_WAIT = GameView.K_WAIT;
+            K_WAIT = GameView.K_WAIT, K_SETTINGS = GameView.K_SETTINGS;
     static final int CELL = 0, DISC = 1, FIRE = 2, SLOT = 3, KEY = 4, SHOULDER = 5;
     /** Keypad's own "close" key: hides the number keys again. */
     static final int K_CLOSE = -100;
@@ -131,7 +131,8 @@ final class Deck {
             panels.add(new int[]{0, top, artW - 1, artH - 1});
             boolean compact = deckH < 110;
             int ty = top + (compact ? 9 : 13);
-            disc(K_MENU, ox + 13, ty, 7, Icons.GEAR).longPress = true;
+            disc(K_MENU, ox + 13, ty, 7, Icons.MENU).longPress = true;
+            disc(K_SETTINGS, ox + 31, ty, 6, Icons.GEAR);
             slot(ox + 67, ty);
             disc(0, ox + 104, ty, 7, Icons.KEYS);
             disc(K_MAP, ox + 122, ty, 7, Icons.MAP);
@@ -162,8 +163,9 @@ final class Deck {
             panels.add(new int[]{0, 0, gl - 1, artH - 1});
             panels.add(new int[]{gr, 0, artW - 1, artH - 1});
             int lx = gl / 2, rx = gr + (artW - gr) / 2, H = artH, W = artW;
-            disc(K_MENU, 14, 15, 7, Icons.GEAR).longPress = true;
+            disc(K_MENU, 14, 15, 7, Icons.MENU).longPress = true;
             disc(0, 32, 15, 7, Icons.KEYS);
+            disc(K_SETTINGS, 50, 15, 6, Icons.GEAR);
             disc(K_MAP, W - 14, 15, 7, Icons.MAP);
             int lw = gl, rw = W - gr;
             slot(gr + Math.max(24, (rw - 28) / 2), 15);
@@ -198,7 +200,7 @@ final class Deck {
     }
 
     /** What the physical buttons do (Android gamepad names): button, action. */
-    static final String[][] LEGEND = {{"A", "FIRE"}, {"B", "MENU"}, {"HOLD B", "SETUP"}, {"X", "WAIT"}, {"Y", "MAP"},
+    static final String[][] LEGEND = {{"A", "FIRE"}, {"B", "MENU"}, {"START", "SETUP"}, {"X", "WAIT"}, {"Y", "MAP"},
             {"L R", "STEP"}, {"L2 R2", "WEAPON"}, {"SELECT", "KEYPAD"}, {"DPAD", "MOVE"}};
 
     /**
@@ -218,9 +220,11 @@ final class Deck {
         int gl = (int) Math.floor(game[0] / artPx), gr = (int) Math.ceil(game[2] / artPx);
         panels.add(new int[]{0, 0, gl - 1, artH - 1});
         panels.add(new int[]{gr, 0, artW - 1, artH - 1});
-        int lx = gl / 2, r = Math.max(5, Math.min(Math.min(12, gl / 2 - 6), ((artH - 8) / 4 - 6) / 2)), step = 2 * r + 6;
-        int y = Math.max(r + 6, artH / 2 - step * 3 / 2);
-        disc(K_MENU, lx, y, r, Icons.GEAR).longPress = true;
+        int lx = gl / 2, r = Math.max(5, Math.min(Math.min(12, gl / 2 - 6), ((artH - 8) / 5 - 6) / 2)), step = 2 * r + 6;
+        int y = Math.max(r + 6, artH / 2 - step * 2);
+        disc(K_SETTINGS, lx, y, r, Icons.GEAR);
+        y += step;
+        disc(K_MENU, lx, y, r, Icons.MENU).longPress = true;
         disc(K_MAP, lx, y + step, r, Icons.MAP);
         disc(0, lx, y + 2 * step, r, Icons.KEYS);
         disc(K_WAIT, lx, y + 3 * step, r, Icons.HOUR).repeat = false;

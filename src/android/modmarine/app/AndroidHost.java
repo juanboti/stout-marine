@@ -10,7 +10,9 @@ import android.os.Vibrator;
 import android.widget.Toast;
 
 import brewemu.audio.Mixer;
+import brewemu.brew.Brew;
 import brewemu.brew.Host;
+import brewemu.doomrpg.DoomMap;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,7 +41,39 @@ final class AndroidHost implements Host {
 
     public void present(int[] argb, int w, int h) {
         GameView v = view;
-        if (v != null) v.submitFrame(argb, w, h);
+        if (v == null) return;
+        v.submitFrame(argb, w, h);
+        Brew b = brew;
+        if (b != null) {
+            // the game asks for a door code: open the number keys by themselves (and close them afterwards)
+            boolean pw = DoomMap.state(b) == DoomMap.ST_PASSWORD;
+            if (pw != codePrompt) { codePrompt = pw; v.codePrompt(pw); }
+        }
+        if (miniMap) updateMiniMap(v, w);
+        else if (mapShown) { mapShown = false; v.submitMap(null, 0); }
+    }
+
+    // ---------------------------------------------------------------- mini-map
+    // Read from the game's memory right after each frame, on the emulator thread (so it matches the picture).
+    volatile Brew brew;
+    volatile boolean miniMap;
+    private final DoomMap map = new DoomMap();
+    private int[] mapPx = new int[0];
+    private boolean mapShown;
+    private boolean codePrompt;
+
+    private void updateMiniMap(GameView v, int gameW) {
+        Brew b = brew;
+        if (b != null && map.read(b)) {
+            int tiles = gameW >= 240 ? 15 : 13, cell = gameW >= 240 ? 5 : 4, size = tiles * cell;
+            if (mapPx.length != size * size) mapPx = new int[size * size];
+            map.drawAround(mapPx, size, cell, 0x99000000);
+            v.submitMap(mapPx, size);
+            mapShown = true;
+        } else if (mapShown) {
+            mapShown = false;
+            v.submitMap(null, 0);
+        }
     }
 
     public File dataDir() { return dataDir; }

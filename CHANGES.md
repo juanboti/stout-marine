@@ -1,5 +1,18 @@
 # Changes
 
+## 1.9
+- Door codes: when the game asks for a code, the number keys open by themselves (the big keypad in handheld
+  mode, the touch keypad on phones) and close again afterwards. Select / the keypad button still open them
+  any time.
+- Settings button: the gear now opens Stout Marine's settings with one tap, and the game's menu has its own
+  button (three bars). On controllers, Start opens the settings (B is still the game's menu). Holding the
+  menu button still opens the settings, as before.
+- Mini-map (settings, Mini-map: on / off; off by default): a small, see-through map in the top-right corner
+  of the game picture while you play, centred on you. It is drawn from the game's own automap data, read
+  from the emulated phone's memory without changing anything, so it shows exactly what the game's map
+  shows: places you have visited, walls, doors and the monsters there. It hides itself in menus, on the
+  game's own map screen and while the big keypad is open.
+
 ## 1.8.2
 - Fixed: the game's own Volume setting (Options, Volume) now changes the music and sounds that are already
   playing, as on the original phone. Before, music kept its old volume until the next song started.

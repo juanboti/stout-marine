@@ -20,6 +20,9 @@ final class Prefs {
     /** Phone screen size the game is told about: true = 240x320 (larger view, the default), false = 176x208 (classic). */
     static boolean large(Context c) { return p(c).getBoolean("large", true); }
     static void setLarge(Context c, boolean b) { p(c).edit().putBoolean("large", b).commit(); }
+    /** Mini-map in the corner of the game picture (off by default: the original look). */
+    static boolean miniMap(Context c) { return p(c).getBoolean("minimap", false); }
+    static void setMiniMap(Context c, boolean b) { p(c).edit().putBoolean("minimap", b).apply(); }
     /** Handheld mode: 0 = automatic (on while a game controller is present), 1 = always, 2 = never. */
     static final int HANDHELD_AUTO = 0, HANDHELD_ON = 1, HANDHELD_OFF = 2;
     static int handheld(Context c) { return p(c).getInt("handheld", HANDHELD_AUTO); }

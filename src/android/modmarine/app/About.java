@@ -28,10 +28,13 @@ final class About {
 
     /** Shown once after an update (keep in step with CHANGES.md). */
     static final String WHATS_NEW =
-          "\u2022 Fixed: the game's Volume setting (Options) now changes music that is already playing, as on the original phone.\n\n"
-        + "\u2022 From 1.8.1: fires and other animated scenery move, as on the original phone.\n\n"
-        + "\u2022 From 1.8: Picture setting (hold the gear or B, then Picture): Sharp pixels, Smooth, "
-        + "Smart upscale (hq) or xBR upscale.";
+          "\u2022 New: when the game asks for a door code, the number keys open by themselves.\n\n"
+        + "\u2022 New: a settings button. The gear now opens Stout Marine's settings with one tap (Start on a controller); "
+        + "the game's menu has its own button with three bars. Holding the menu button still opens the settings.\n\n"
+        + "\u2022 New: Mini-map. Tap the gear, then Mini-map: a small see-through map in the top-right corner "
+        + "while you play. It shows what the game's own map shows. Off by default.\n\n"
+        + "\u2022 From 1.8.1 and 1.8.2: fires and animated scenery move, and the game's Volume setting changes music "
+        + "that is already playing, as on the original phone.";
 
     static void showWhatsNew(Activity a) {
         new AlertDialog.Builder(a, android.R.style.Theme_DeviceDefault_Dialog_Alert)

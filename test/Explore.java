@@ -22,7 +22,17 @@ public class Explore {
         final TreeMap<Integer, Integer> clipCounts = new TreeMap<Integer, Integer>();
         final int[] pcmPlays = {0}, midiPlays = {0}, vibes = {0};
         Host host = new Host() {
-            public void present(int[] argb, int w, int h) { last = argb; lw = w; lh = h; frameHash = Arrays.hashCode(argb); }
+            public void present(int[] argb, int w, int h) {
+                last = argb; lw = w; lh = h; frameHash = Arrays.hashCode(argb);
+                if (miniMap != null) {   // -Dminimap=true: read the mini-map after every frame, as the app does
+                    long t0 = System.nanoTime();
+                    boolean ok = miniMap.read(brewRef[0]);
+                    if (ok) { int size = w >= 240 ? 75 : 52; if (mapPx.length != size * size) mapPx = new int[size * size]; miniMap.drawAround(mapPx, size, w >= 240 ? 5 : 4, 0x99000000); mapSize = size; }
+                    else mapSize = 0;
+                    long dt = System.nanoTime() - t0; mapMaxNs = Math.max(mapMaxNs, dt); mapTotalNs += dt;
+                    if (ok) mapOk++; else mapNo++;
+                }
+            }
             public File dataDir() { return data; }
             public void vibrate(int ms) { if (ms > 0) vibes[0]++; }
             public int playPcm(short[] pcm, int rate, int volume) {
@@ -39,8 +49,10 @@ public class Explore {
         };
         Installer.Game g = Installer.load(dir);
         boolean classic = Boolean.getBoolean("classic");      // default: the large 240 x 320 screen, like the app
+        miniMap = Boolean.getBoolean("minimap") ? new brewemu.doomrpg.DoomMap() : null;
         Brew b = new Brew(host, Installer.read(g.mod), Installer.read(g.bar), g.barName, classic ? 176 : 240, classic ? 208 : 320, g.clsid);
         b.enableDoomRpgVibrateOption();                       // as the app does
+        brewRef[0] = b;
         b.clock = new Brew.Clock() { public long uptimeMs() { return now[0]; } };
         if (!b.start()) throw new IllegalStateException("start failed");
         ByteArrayOutputStream wav = new ByteArrayOutputStream();
@@ -82,13 +94,28 @@ public class Explore {
         System.out.println("screen " + lw + "x" + lh + ", sound effects played: " + pcmPlays[0] + ", songs: " + midiPlays[0] + ", vibrations: " + vibes[0]);
         System.out.println("effects by clip length (samples): " + clipCounts);
         System.out.println("heap in use " + b.heap.inUse + " peak " + b.heap.peak);
+        if (miniMap != null) System.out.println("mini-map: shown on " + mapOk + " frames, hidden on " + mapNo
+                + ", average " + (mapTotalNs / Math.max(1, mapOk + mapNo) / 1000) + " us, slowest " + (mapMaxNs / 1000) + " us");
     }
     static long pendingCheck;
+    static brewemu.doomrpg.DoomMap miniMap;
+    static final Brew[] brewRef = new Brew[1];
+    static int[] mapPx = new int[0];
+    static int mapSize, mapOk, mapNo;
+    static long mapMaxNs, mapTotalNs;
 
     static void save(File f) throws IOException {
         if (last == null) return;
         java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(lw, lh, java.awt.image.BufferedImage.TYPE_INT_RGB);
         img.setRGB(0, 0, lw, lh, last, 0, lw);
+        if (mapSize > 0) {   // the mini-map as the app shows it: top-right, see-through
+            java.awt.Graphics2D gr = img.createGraphics();
+            java.awt.image.BufferedImage m = new java.awt.image.BufferedImage(mapSize, mapSize, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+            m.setRGB(0, 0, mapSize, mapSize, mapPx, 0, mapSize);
+            gr.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 210 / 255f));
+            gr.drawImage(m, lw - mapSize - 3, 21, null);
+            gr.dispose();
+        }
         javax.imageio.ImageIO.write(img, "png", f);
     }
 }

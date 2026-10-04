@@ -44,21 +44,22 @@ def help_controls():
     im = im.crop((0, top, im.width, im.height)).convert("RGB")
     d = ImageDraw.Draw(im)
     def at(b, dx, dy): return (b["cx"] + dx, b["cy"] - top + dy)
-    gear, wl, wr = by_key(j, -6), by_key(j, 42), by_key(j, 55)
+    menu, gear, wl, wr = by_key(j, -6), by_key(j, -21), by_key(j, 42), by_key(j, 55)
     keys, mp, wait, fire = by_key(j, 0), by_key(j, -7), by_key(j, 57), by_key(j, -5)
     cells = [b for b in j["buttons"] if b["kind"] == 0]
     cx0 = min(b["x0"] for b in cells); cy0 = min(b["y0"] for b in cells) - top
     cw = cells[0]["x1"] - cells[0]["x0"]
     sl = [b for b in j["buttons"] if b["kind"] == 5]
     marks = [
-        (1, at(gear, 52, 40)),
-        (2, (wl["x0"] - 38, (wl["y0"] + wl["y1"]) / 2 - top)),
-        (3, at(keys, -46, 42)),
-        (4, at(mp, 40, 44)),
-        (5, (cx0 + cw / 2, cy0 + cw / 2)),
-        (7, at(wait, 0, 100)),
-        (8, at(fire, 96, -110)),
-    ] + [(6, (b["x0"] + 36 if b["key"] == 49 else b["x1"] - 36, b["y1"] - top + 32)) for b in sl]
+        (1, at(menu, -18, 52)),
+        (2, at(gear, 30, 46)),
+        (3, (wl["x0"] + 10, (wl["y0"] + wl["y1"]) / 2 - top + 52)),
+        (4, at(keys, -46, 42)),
+        (5, at(mp, 40, 44)),
+        (6, (cx0 + cw / 2, cy0 + cw / 2)),
+        (8, at(wait, 0, 100)),
+        (9, at(fire, 96, -110)),
+    ] + [(7, (b["x0"] + 36 if b["key"] == 49 else b["x1"] - 36, b["y1"] - top + 32)) for b in sl]
     for n, (x, y) in marks:
         badge(d, x, y, n)
     return im

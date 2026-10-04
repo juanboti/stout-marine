@@ -67,6 +67,14 @@ final class Icons {
         ".#######.",
         "...#.#...",
     };
+    /** The game's menu (three bars). */
+    static final String[] MENU = {
+        "#######",
+        ".......",
+        "#######",
+        ".......",
+        "#######",
+    };
     static final String[] MAP = {
         "###......",
         "#.####...",

@@ -46,6 +46,7 @@ public final class GameActivity extends Activity {
 
         if (host == null) host = new AndroidHost(this);
         host.activity = this;
+        host.miniMap = Prefs.miniMap(this);
         if (brew == null) {
             try {
                 Installer.Game g = Installer.load(dir);
@@ -56,6 +57,7 @@ public final class GameActivity extends Activity {
                 // this phone can vibrate and play sound together: lets the game offer its own Vibrate option
                 if (brew.enableDoomRpgVibrateOption()) vibrateOnByDefault(brew);
                 keys = new KeyPump(brew, host);
+                host.brew = brew;
             } catch (Throwable t) {
                 android.util.Log.e("ModMarine", "load failed", t);
                 brew = null;
@@ -134,11 +136,12 @@ public final class GameActivity extends Activity {
     }
 
     private void showSettings() {
-        final boolean vib = Prefs.vibrate(this), large = Prefs.large(this);
+        final boolean vib = Prefs.vibrate(this), large = Prefs.large(this), map = Prefs.miniMap(this);
         String[] items = {
             "Help: what each button does",
             "About Stout Marine",
             "Picture: " + PICTURE_NAMES[view != null ? view.picture() : Prefs.picture(this)],
+            "Mini-map: " + (map ? "on" : "off"),
             "Vibration: " + (vib ? "on" : "off"),
             "Screen size: " + (large ? "large (240 x 320)" : "classic (176 x 208)"),
             "Handheld mode: " + handheldLabel(),
@@ -154,13 +157,14 @@ public final class GameActivity extends Activity {
                     if (which == 0) Help.show(GameActivity.this, null);
                     else if (which == 1) About.show(GameActivity.this);
                     else if (which == 2) choosePicture();
-                    else if (which == 3) Prefs.p(GameActivity.this).edit().putBoolean("vibrate", !vib).apply();
-                    else if (which == 4) confirmScreenSize(!large);
-                    else if (which == 5) { Prefs.setHandheld(GameActivity.this, (Prefs.handheld(GameActivity.this) + 1) % 3); updateMode(); }
-                    else if (which == 6) SaveTransfer.startExport(GameActivity.this, "StoutMarine-saves.zip");
-                    else if (which == 7) confirmImport();
-                    else if (which == 8) confirmQuit();
-                    else if (which == 9) confirmReload();
+                    else if (which == 3) { Prefs.setMiniMap(GameActivity.this, !map); host.miniMap = !map; }
+                    else if (which == 4) Prefs.p(GameActivity.this).edit().putBoolean("vibrate", !vib).apply();
+                    else if (which == 5) confirmScreenSize(!large);
+                    else if (which == 6) { Prefs.setHandheld(GameActivity.this, (Prefs.handheld(GameActivity.this) + 1) % 3); updateMode(); }
+                    else if (which == 7) SaveTransfer.startExport(GameActivity.this, "StoutMarine-saves.zip");
+                    else if (which == 8) confirmImport();
+                    else if (which == 9) confirmQuit();
+                    else if (which == 10) confirmReload();
                 }
             })
             .setNegativeButton("Close", null)
@@ -362,7 +366,8 @@ public final class GameActivity extends Activity {
             case KeyEvent.KEYCODE_D: case KeyEvent.KEYCODE_BUTTON_R1: return GameView.K_STRAFE_R;
             case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER: case KeyEvent.KEYCODE_SPACE:
             case KeyEvent.KEYCODE_BUTTON_A: return GameView.K_FIRE;
-            case KeyEvent.KEYCODE_BUTTON_START: case KeyEvent.KEYCODE_ESCAPE: case KeyEvent.KEYCODE_BACK:
+            case KeyEvent.KEYCODE_BUTTON_START: return GameView.K_SETTINGS;
+            case KeyEvent.KEYCODE_ESCAPE: case KeyEvent.KEYCODE_BACK:
             case KeyEvent.KEYCODE_BUTTON_B: case KeyEvent.KEYCODE_MENU: return GameView.K_MENU;
             case KeyEvent.KEYCODE_TAB: case KeyEvent.KEYCODE_M:
             case KeyEvent.KEYCODE_BUTTON_Y: return GameView.K_MAP;
@@ -405,6 +410,10 @@ public final class GameActivity extends Activity {
             if (e.getRepeatCount() == 0 && view != null) { releaseSticks(); view.toggleKeypad(); }
             return true;
         }
+        if (k == GameView.K_SETTINGS) {
+            if (e.getRepeatCount() == 0) { releaseSticks(); showSettings(); }
+            return true;
+        }
         if (view != null && view.bigKeypad()) return bigKeypadDown(code, k, e);
         if (k == GameView.K_MENU) {
             if (e.getRepeatCount() == 0) { menuDown = true; menuHeld = false; ui.postDelayed(menuHold, 700); }
@@ -418,7 +427,7 @@ public final class GameActivity extends Activity {
     @Override public boolean onKeyUp(int code, KeyEvent e) {
         int k = map(code);
         if (k == 0 || keys == null) return super.onKeyUp(code, e);
-        if (k == GameView.K_KEYPAD) return true;
+        if (k == GameView.K_KEYPAD || k == GameView.K_SETTINGS) return true;
         if (view != null && view.bigKeypad()) return bigKeypadUp(code, k);
         if (k == GameView.K_MENU) {
             ui.removeCallbacks(menuHold);

@@ -21,7 +21,7 @@ They are copied into the app's private storage and never leave the phone.
    (Android 5.0 or newer). Android will ask you to allow installing apps from that source.
 2. Open Stout Marine and tap **Choose game file**: pick the `.zip` of your own copy of the BREW
    version of Doom RPG (it must contain `doomrpg.mod` and `doomrpg.bar`).
-3. Play. Hold the gear (or the B button on a controller) for settings and help.
+3. Play. Tap the gear (or press Start on a controller) for settings and help.
 
 Updates install over the previous version and keep your saved games. Your saved games can also be
 exported to a `.zip` and imported again (settings, Export / Import saved games).
@@ -31,17 +31,16 @@ exported to a `.zip` and imported again (settings, Export / Import saved games).
 | Touch controls (phone) | Handheld mode | Door codes on a handheld |
 | :---: | :---: | :---: |
 | <img src="apk/res/drawable-nodpi/help_controls.png" width="260" alt="Touch controls"> | <img src="apk/res/drawable-nodpi/help_handheld.png" width="260" alt="Handheld mode"> | <img src="apk/res/drawable-nodpi/help_bigkeypad.png" width="260" alt="Big keypad"> |
-| 1 gear, 2 weapon, 3 keypad, 4 map, 5 cross (walk, turn), 6 L / R side-step, 7 wait, 8 fire | the game in the middle at a sharp size, a button guide beside it | big number keys, worked with the d-pad and A |
+| 1 menu, 2 gear (settings), 3 weapon, 4 keypad, 5 map, 6 cross (walk, turn), 7 L / R side-step, 8 wait, 9 fire | the game in the middle at a sharp size, a button guide beside it | big number keys, worked with the d-pad and A |
 
 ### Settings
 
-Hold the gear (or B on a controller) for Stout Marine's own settings: help, picture filter, vibration,
-screen size, handheld mode, and export / import of saved games.
+Tap the gear (or press Start on a controller) for Stout Marine's own settings: help, picture filter, mini-map,
+vibration, screen size, handheld mode, and export / import of saved games.
 
 | Settings | Picture choices |
 | :---: | :---: |
 | <img src="docs/settings.png" width="300" alt="Stout Marine settings"> | <img src="docs/settings_picture.png" width="300" alt="Picture setting"> |
-
 
 ## Controls
 
@@ -55,16 +54,17 @@ A cross like a handheld's d-pad (up / down walk, left / right turn) with separat
 | Weapon slot, left and right arrows | * / 7 |
 | Hourglass (wait) | 9 |
 | Red crosshair (fire / use) | Select |
-| Gear (tap) | Left soft key (Menu / Back) |
+| Menu (three bars) | Left soft key (Menu / Back) |
 | Map | Right soft key (Map / Leave) |
 | Keypad | 0-9, *, # |
 
 You can also swipe on the game picture (up/down to step, left/right to turn) and tap it to fire.
-Tap the words in the game's bottom bar to press the soft keys. Hold the gear for settings and help.
+Tap the words in the game's bottom bar to press the soft keys. Tap the gear for settings and help.
 Gamepads and keyboards work too (Backspace is the phone's CLR key).
 
 Settings: help, about (credits and licences), picture (sharp pixels, smooth, smart upscale (hq) or
-xBR upscale), vibration (this app only), screen size
+xBR upscale), mini-map (a small see-through map in the corner; off by default), vibration (this app
+only), screen size
 (large 240 x 320, the default, or classic 176 x 208), handheld mode, export / import saved games, quit,
 and reinstall the game file. "What's new" is shown once after an update, and leaving the game with
 Home or Recents shows a short reminder to save first (Android may close apps waiting in the background).
@@ -74,13 +74,14 @@ See `CHANGES.md` for the version history.
 
 When a built-in or attached game controller is found on a landscape or square screen, the touch deck
 is replaced by the game picture at the largest whole-number scale (sharp pixels), with small side
-panels: gear, map, keypad and wait buttons on the left, and a button guide on the right (or the
+panels: gear (settings), menu, map, keypad and wait buttons on the left, and a button guide on the right (or the
 keypad, when opened). The setting "Handheld mode" can be Auto (the default), On or Off.
 
 | Button | Action |
 | --- | --- |
 | A | Fire / use (Select) |
-| B (or Start) | Game menu (left soft key); **hold** for these settings |
+| B | Game menu (left soft key); **hold** for these settings |
+| Start | These settings |
 | X | Wait (9) |
 | Y | Map (right soft key) |
 | Select | Open / close the big number keys (door codes) |
@@ -89,7 +90,9 @@ keypad, when opened). The setting "Handheld mode" can be Auto (the default), On 
 | L1 / R1 | Side-step (1 / 3) |
 | L2 / R2 | Previous / next weapon (* / 7), as buttons or analog triggers |
 
-**Door codes:** Select (or the keypad button) opens big number keys beside the game: the game moves to
+**Door codes:** when the game asks for a door code, big number keys open by themselves (on phones too: the
+touch keypad) and close again when the code is entered. Select (or the keypad button) opens them any time.
+On a handheld the game moves to
 the left and shrinks a little, the right side becomes a large keypad. The d-pad moves an orange cursor,
 A presses the key, B or Select closes it. Touch works too. While it is open the other buttons do nothing,
 so you can't walk or fire by accident.

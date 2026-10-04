@@ -22,10 +22,12 @@ final class GameView extends View {
             K_WPN_PREV = '*', K_WPN_NEXT = '7', K_WAIT = '9';
     /** Not a game key: opens / closes the number keys (Select on a controller). */
     static final int K_KEYPAD = -20;
+    /** Not a game key: opens Stout Marine's settings (the gear button; Start on a controller). */
+    static final int K_SETTINGS = -21;
 
 
     final KeyPump keys;
-    /** Opened by holding the gear (menu) button. */
+    /** Stout Marine's settings: the gear button, or holding the menu button. */
     Runnable settings;
     private final float dp;
 
@@ -77,6 +79,8 @@ final class GameView extends View {
         picture = Prefs.picture(c);
         deckPaint.setFilterBitmap(false);
         deckPaint.setAntiAlias(false);
+        mapPaint.setFilterBitmap(false);
+        mapPaint.setAlpha(210);
         post(ticker);
     }
 
@@ -94,6 +98,28 @@ final class GameView extends View {
     }
 
     int picture() { return picture; }
+
+    // mini-map (drawn small and see-through in the top-right corner of the game picture)
+    private int[] mapFront;
+    private int mapSize;
+    private boolean mapDirty;
+    private Bitmap mapBmp;
+    private final Paint mapPaint = new Paint();
+    private final RectF mapDst = new RectF();
+
+    /** A new mini-map picture (size x size), or null to hide it. Called on the emulator thread. */
+    void submitMap(int[] px, int size) {
+        synchronized (frameLock) {
+            if (px == null) { mapSize = 0; }
+            else {
+                if (mapFront == null || mapFront.length != px.length) mapFront = new int[px.length];
+                System.arraycopy(px, 0, mapFront, 0, px.length);
+                mapSize = size;
+            }
+            mapDirty = true;
+        }
+        postInvalidateOnAnimation();
+    }
 
     /** Changes the Picture setting (and saves it). */
     void setPicture(int p) {
@@ -137,7 +163,24 @@ final class GameView extends View {
     /** Handheld mode with the number keys open: the big keypad, worked with the d-pad and A. */
     boolean bigKeypad() { return deck.bigKeypad; }
 
-    void toggleKeypad() { setKeypad(!deck.keypadOn); }
+    void toggleKeypad() { autoKeypad = false; setKeypad(!deck.keypadOn); }
+
+    /** True while the number keys are open because the game asked for a door code (not by the player). */
+    private boolean autoKeypad;
+
+    /** The game started / stopped asking for a door code. Called on the emulator thread. */
+    void codePrompt(final boolean on) {
+        post(new Runnable() {
+            public void run() {
+                if (on) {
+                    if (!deck.keypadOn) { setKeypad(true); autoKeypad = true; }
+                } else if (autoKeypad) {
+                    autoKeypad = false;
+                    if (deck.keypadOn) setKeypad(false);
+                }
+            }
+        });
+    }
 
     /** Opens / closes the number keys; in handheld mode this switches to / from the big keypad. */
     void setKeypad(boolean on) {
@@ -229,6 +272,21 @@ final class GameView extends View {
             bmpPaint.setFilterBitmap(picture != Prefs.PICTURE_SHARP || deck.bigKeypad);
             c.drawBitmap(bmp, src, gameRect, bmpPaint);
         }
+        drawMap(c);
+    }
+
+    private void drawMap(Canvas c) {
+        int size, gw;
+        synchronized (frameLock) {
+            size = mapSize; gw = fw;
+            if (size == 0 || gw == 0 || deck.bigKeypad) return;
+            if (mapBmp == null || mapBmp.getWidth() != size) { mapBmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888); mapDirty = true; }
+            if (mapDirty) { mapBmp.setPixels(mapFront, 0, size, 0, 0, size, size); mapDirty = false; }
+        }
+        // in game pixels: 3 from the right edge, just below the game's message bar at the top
+        float s = gameRect.width() / gw;
+        mapDst.set(gameRect.right - (size + 3) * s, gameRect.top + 21 * s, gameRect.right - 3 * s, gameRect.top + (21 + size) * s);
+        c.drawBitmap(mapBmp, null, mapDst, mapPaint);
     }
 
     // ---------------------------------------------------------------- input
@@ -349,6 +407,7 @@ final class GameView extends View {
             if (b.pointer == id) {
                 b.pointer = -1; any = true;
                 if (b.longPress) { if (!b.longFired && !cancel) keys.tap(b.key); }
+                else if (b.key == K_SETTINGS) { if (!cancel && settings != null) settings.run(); }
                 else if (b.key != 0) keys.release(b.key);
             }
         }
