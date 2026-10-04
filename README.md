@@ -38,9 +38,10 @@ exported to a `.zip` and imported again (settings, Export / Import saved games).
 Tap the gear (or press Start on a controller) for Stout Marine's own settings: help, picture filter, mini-map,
 vibration, screen size, handheld mode, and export / import of saved games.
 
-| Settings | Picture choices |
-| :---: | :---: |
-| <img src="docs/settings.png" width="300" alt="Stout Marine settings"> | <img src="docs/settings_picture.png" width="300" alt="Picture setting"> |
+| Settings | Picture choices | Mini-map |
+| :---: | :---: | :---: |
+| <img src="docs/settings.png" width="260" alt="Stout Marine settings"> | <img src="docs/settings_picture.png" width="260" alt="Picture setting"> | <img src="docs/minimap.png" width="200" alt="Mini-map"> |
+|  |  | top-right corner while you play: where you have been, walls, doors (yellow) and you (arrow) |
 
 ## Controls
 
