@@ -9,7 +9,7 @@ final class Deck {
     static final int K_UP = GameView.K_UP, K_DOWN = GameView.K_DOWN, K_LEFT = GameView.K_LEFT, K_RIGHT = GameView.K_RIGHT,
             K_FIRE = GameView.K_FIRE, K_MENU = GameView.K_MENU, K_MAP = GameView.K_MAP, K_STRAFE_L = GameView.K_STRAFE_L,
             K_STRAFE_R = GameView.K_STRAFE_R, K_WPN_PREV = GameView.K_WPN_PREV, K_WPN_NEXT = GameView.K_WPN_NEXT,
-            K_WAIT = GameView.K_WAIT, K_SETTINGS = GameView.K_SETTINGS;
+            K_WAIT = GameView.K_WAIT, K_SETTINGS = GameView.K_SETTINGS, K_WEAPONS = GameView.K_WEAPONS;
     static final int CELL = 0, DISC = 1, FIRE = 2, SLOT = 3, KEY = 4, SHOULDER = 5;
     /** Keypad's own "close" key: hides the number keys again. */
     static final int K_CLOSE = -100;
@@ -48,6 +48,9 @@ final class Deck {
     /** Button guide (handheld mode): drawn inside legendX..+legendW, legendY..+legendH. */
     String[][] legend;
     int legendX, legendY, legendW, legendH;
+
+    /** The weapon in hand and what the arrows would switch to (weapon numbers; -1 = not known, e.g. in menus). */
+    int wpnCur = -1, wpnPrev = -1, wpnNext = -1;
 
     /** Size of the game picture in game pixels (sets its aspect ratio). */
     final int gW, gH;
@@ -100,11 +103,13 @@ final class Deck {
         buttons.add(b);
     }
 
+    /** Weapon slot: arrows (with the weapon they switch to) at the ends, the weapon in hand in the middle (opens the picker). */
     private void slot(int cx, int cy) {
         slotCx = cx; slotCy = cy;
-        Btn l = new Btn(); l.kind = SLOT; l.key = K_WPN_PREV; l.x0 = cx - 22; l.x1 = cx - 1; l.y0 = cy - 6; l.y1 = cy + 6;
-        Btn r = new Btn(); r.kind = SLOT; r.key = K_WPN_NEXT; r.x0 = cx; r.x1 = cx + 22; r.y0 = cy - 6; r.y1 = cy + 6;
-        buttons.add(l); buttons.add(r);
+        Btn l = new Btn(); l.kind = SLOT; l.key = K_WPN_PREV; l.x0 = cx - 28; l.x1 = cx - 12; l.y0 = cy - 7; l.y1 = cy + 7;
+        Btn m = new Btn(); m.kind = SLOT; m.key = K_WEAPONS; m.x0 = cx - 11; m.x1 = cx + 11; m.y0 = cy - 7; m.y1 = cy + 7;
+        Btn r = new Btn(); r.kind = SLOT; r.key = K_WPN_NEXT; r.x0 = cx + 12; r.x1 = cx + 28; r.y0 = cy - 7; r.y1 = cy + 7;
+        buttons.add(l); buttons.add(m); buttons.add(r);
     }
 
     private Btn fire(int cx, int cy) {
@@ -168,7 +173,7 @@ final class Deck {
             disc(K_SETTINGS, 50, 15, 6, Icons.GEAR);
             disc(K_MAP, W - 14, 15, 7, Icons.MAP);
             int lw = gl, rw = W - gr;
-            slot(gr + Math.max(24, (rw - 28) / 2), 15);
+            slot(gr + Math.max(30, (rw - 24) / 2), 15);
             shoulder(K_STRAFE_L, 6, 27, Math.min(lw - 7, 46), 40);
             shoulder(K_STRAFE_R, Math.max(gr + 6, W - 47), 27, W - 7, 40);
             int lcell = Math.max(12, Math.min(20, (H - 46 - 6 - 2) / 3));
@@ -349,12 +354,18 @@ final class Deck {
                 }
                 case SLOT:
                     if (!slotDrawn) {
-                        a.well(slotCx - 22, slotCy - 6, slotCx + 22, slotCy + 6);
-                        a.blitCenter(Icons.GUN, slotCx, slotCy, BONE, true);
+                        a.well(slotCx - 28, slotCy - 7, slotCx + 28, slotCy + 7);
                         slotDrawn = true;
                     }
-                    if (b.key == K_WPN_PREV) a.blitCenter(Icons.CHEV_L, slotCx - 17, slotCy, on ? OR2 : R3, false);
-                    else a.blitCenter(Icons.CHEV_R, slotCx + 17, slotCy, on ? OR2 : R3, false);
+                    if (b.key == K_WPN_PREV) {
+                        a.blitCenter(Icons.CHEV_L, slotCx - 25, slotCy, on ? OR2 : R3, false);
+                        if (wpnPrev >= 0) a.blitCenter(Icons.hflip(Icons.WEAPON_S[wpnPrev]), slotCx - 17, slotCy, on ? OR2 : BONE2, false);
+                    } else if (b.key == K_WPN_NEXT) {
+                        a.blitCenter(Icons.CHEV_R, slotCx + 25, slotCy, on ? OR2 : R3, false);
+                        if (wpnNext >= 0) a.blitCenter(Icons.WEAPON_S[wpnNext], slotCx + 17, slotCy, on ? OR2 : BONE2, false);
+                    } else {
+                        a.blitCenter(wpnCur >= 0 ? Icons.WEAPON[wpnCur] : Icons.GUN, slotCx, slotCy, on ? OR2 : BONE, true);
+                    }
                     break;
             }
         }

@@ -18,7 +18,8 @@ final class Help {
         "img:help_controls",
         "<b>1 Menu</b> &mdash; the game's menu, or go back inside menus.<br>"
         + "<b>2 Gear</b> &mdash; Stout Marine's settings and this help (holding the menu button works too).<br>"
-        + "<b>3 Weapon slot</b> &mdash; left arrow: previous weapon &middot; right arrow: next weapon.<br>"
+        + "<b>3 Weapon slot</b> &mdash; left arrow: previous weapon &middot; right arrow: next weapon "
+        + "(the small pictures show which) &middot; the weapon in the middle: the <b>weapon picker</b> (more below).<br>"
         + "<b>4 Keypad</b> &mdash; number keys for door codes (more below).<br>"
         + "<b>5 Map</b> &mdash; show or hide the map.<br>"
         + "<b>6 Cross</b> &mdash; up: forward &middot; down: back &middot; left / right: turn. "
@@ -36,6 +37,12 @@ final class Help {
         "img:help_gestures",
         "Swipe up / down to step forward / back, left / right to turn. Swipe and hold to keep going. "
         + "Tap to fire / use. Tap the words in the game's bottom bar (Menu / Back on the left, Map / Leave on the right) to press them.",
+
+        "<h4>Weapon picker</h4>"
+        + "Tap the weapon in the middle of the weapon slot (or hold <b>L2</b> or <b>R2</b> on a controller) to see all your "
+        + "weapons with their ammo. Tap one, or choose it with the d-pad and <b>A</b>, to switch to it; tap outside or press "
+        + "<b>B</b> to close. Weapons with no ammo left are grey, as the game won't switch to them. The weapon pictures come "
+        + "from your own copy of the game.",
 
         "<h4>Door-code keypad</h4>",
         "img:help_keypad",
@@ -81,7 +88,7 @@ final class Help {
         + "<b>Start</b> &mdash; these settings.<br>"
         + "<b>Y</b>, <b>Tab</b>, <b>M</b> &mdash; map.<br>"
         + "<b>Select</b>, <b>K</b> &mdash; open / close the number keys.<br>"
-        + "<b>L2 / R2</b>, <b>Q / E</b> &mdash; previous / next weapon.<br>"
+        + "<b>L2 / R2</b>, <b>Q / E</b> &mdash; previous / next weapon. <b>Hold L2 or R2</b>: the weapon picker.<br>"
         + "<b>X button</b> &mdash; wait. Number keys type door codes. <b>Backspace</b> &mdash; the phone's CLR key.<br>"
         + "The on-screen controls hide while you use a controller and come back when you touch the screen.",
     };

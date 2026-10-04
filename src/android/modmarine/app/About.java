@@ -28,13 +28,11 @@ final class About {
 
     /** Shown once after an update (keep in step with CHANGES.md). */
     static final String WHATS_NEW =
-          "\u2022 New: when the game asks for a door code, the number keys open by themselves.\n\n"
-        + "\u2022 New: a settings button. The gear now opens Stout Marine's settings with one tap (Start on a controller); "
-        + "the game's menu has its own button with three bars. Holding the menu button still opens the settings.\n\n"
-        + "\u2022 New: Mini-map. Tap the gear, then Mini-map: a small see-through map in the top-right corner "
-        + "while you play. It shows what the game's own map shows. Off by default.\n\n"
-        + "\u2022 From 1.8.1 and 1.8.2: fires and animated scenery move, and the game's Volume setting changes music "
-        + "that is already playing, as on the original phone.";
+          "\u2022 New: weapon picker. Tap the weapon in the middle of the weapon slot (or hold L2 / R2 on a controller) "
+        + "to see all your weapons with their ammo, then tap one to switch to it.\n\n"
+        + "\u2022 The weapon slot shows the weapon in hand, and small icons by its arrows show what they switch to.\n\n"
+        + "\u2022 From 1.9: mini-map (in settings), a settings button (the gear; Start on a controller), and the "
+        + "number keys open by themselves when the game asks for a door code.";
 
     static void showWhatsNew(Activity a) {
         new AlertDialog.Builder(a, android.R.style.Theme_DeviceDefault_Dialog_Alert)

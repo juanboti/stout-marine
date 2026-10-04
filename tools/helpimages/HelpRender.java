@@ -4,7 +4,9 @@ import java.awt.image.BufferedImage; import javax.imageio.ImageIO; import java.i
 public class HelpRender {
     static void out(int w, int h, float dp, boolean keypad, boolean pulse, String name) throws Exception { out(w, h, dp, keypad, pulse, name, Deck.MODE_TOUCH); }
     static void out(int w, int h, float dp, boolean keypad, boolean pulse, String name, int mode) throws Exception {
-        Deck d = new Deck(dp, mode == Deck.MODE_TOUCH ? 176 : 240, mode == Deck.MODE_TOUCH ? 208 : 320); d.mode = mode; d.keypadOn = keypad; d.layout(w, h); d.keypadOn = keypad; d.pulse = pulse; d.render();
+        Deck d = new Deck(dp, mode == Deck.MODE_TOUCH ? 176 : 240, mode == Deck.MODE_TOUCH ? 208 : 320); d.mode = mode; d.keypadOn = keypad; d.layout(w, h); d.keypadOn = keypad; d.pulse = pulse;
+        d.wpnCur = 2; d.wpnPrev = 1; d.wpnNext = 3;   // an example: pistol in hand, extinguisher / shotgun beside the arrows
+        d.render();
         BufferedImage a = new BufferedImage(d.artW, d.artH, BufferedImage.TYPE_INT_ARGB);
         a.setRGB(0, 0, d.artW, d.artH, d.art.px, 0, d.artW);
         ImageIO.write(a, "png", new File(name + "_art.png"));

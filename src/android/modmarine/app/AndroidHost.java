@@ -48,6 +48,7 @@ final class AndroidHost implements Host {
             // the game asks for a door code: open the number keys by themselves (and close them afterwards)
             boolean pw = DoomMap.state(b) == DoomMap.ST_PASSWORD;
             if (pw != codePrompt) { codePrompt = pw; v.codePrompt(pw); }
+            updateWeapons(v, b);
         }
         if (miniMap) updateMiniMap(v, w);
         else if (mapShown) { mapShown = false; v.submitMap(null, 0); }
@@ -60,6 +61,27 @@ final class AndroidHost implements Host {
     private final DoomMap map = new DoomMap();
     private int[] mapPx = new int[0];
     private boolean mapShown;
+
+    // ---------------------------------------------------------------- weapons (slot icons and the picker)
+    private final brewemu.doomrpg.DoomWeapons weapons = new brewemu.doomrpg.DoomWeapons();
+    private int wOwned = -1, wWeapon = -2;
+    private long wAmmo = -1;
+    private boolean wKnown;
+
+    private void updateWeapons(GameView v, Brew b) {
+        boolean known = weapons.read(b);
+        long ammo = 0;
+        if (known) for (int i = 0; i < 6; i++) ammo = ammo << 8 | weapons.ammo[i];
+        if (known == wKnown && (!known || (weapons.owned == wOwned && weapons.weapon == wWeapon && ammo == wAmmo))) return;
+        wKnown = known; wOwned = weapons.owned; wWeapon = weapons.weapon; wAmmo = ammo;
+        v.weaponInfo(known ? weapons : null);
+    }
+
+    /** From the picker (emulator thread, between the game's frames). */
+    void selectWeapon(Brew b, int w) { weapons.select(b, w); }
+
+    /** Moves a weapon switch along (emulator thread, between the game's frames: never from inside game code). */
+    void tickWeapons(Brew b) { if (weapons.switching()) weapons.tick(b); }
     private boolean codePrompt;
 
     private void updateMiniMap(GameView v, int gameW) {

@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
  * All guest code runs on this one thread.
  */
 final class KeyPump extends Thread {
-    private static final int PRESS = 0, RELEASE = 1, SUSPEND = 2, RESUME = 3;
+    private static final int PRESS = 0, RELEASE = 1, SUSPEND = 2, RESUME = 3, WEAPON = 4;
     private final LinkedBlockingQueue<int[]> q = new LinkedBlockingQueue<int[]>();
     private final Brew brew;
     private final AndroidHost host;
@@ -20,6 +20,8 @@ final class KeyPump extends Thread {
     void press(int code) { int k = avk(code); if (k != 0) q.offer(new int[]{PRESS, k}); }
     void release(int code) { int k = avk(code); if (k != 0) q.offer(new int[]{RELEASE, k}); }
     void tap(int code) { press(code); release(code); }
+    /** Switch to weapon w (the picker); done on the emulator thread with the game's own weapon keys. */
+    void selectWeapon(int w) { q.offer(new int[]{WEAPON, w}); }
     void suspendGame() { q.offer(new int[]{SUSPEND, 0}); }
     void resumeGame() { q.offer(new int[]{RESUME, 0}); }
 
@@ -54,10 +56,11 @@ final class KeyPump extends Thread {
                         case RELEASE: if (!paused) brew.keyUp(e[1]); break;
                         case SUSPEND: if (!paused) { paused = true; brew.suspend(); host.stopAllSounds(); } break;
                         case RESUME: if (paused) { paused = false; brew.resume(); } break;
+                        case WEAPON: if (!paused) host.selectWeapon(brew, e[1]); break;
                     }
                     e = q.poll();
                 }
-                if (!paused && !brew.closed) brew.runTimers();
+                if (!paused && !brew.closed) { brew.runTimers(); host.tickWeapons(brew); }
             }
         } catch (InterruptedException ie) {
             return;

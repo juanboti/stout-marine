@@ -1,5 +1,12 @@
 # Changes
 
+## 1.10
+- Weapon picker: tap the weapon in the middle of the weapon slot (or hold L2 / R2 on a controller) to see all
+  your weapons with their ammo, and tap one (or d-pad + A) to switch to it. The pictures are the game's own
+  weapon pickups and ammo icons, read from your copy of the game (the pistol, which the game never drops, is
+  Stout Marine's own drawing). Switching uses the game's own next / previous weapon keys.
+- The weapon slot shows the weapon in hand, and small icons beside its arrows show what each arrow switches to.
+
 ## 1.9
 - Door codes: when the game asks for a code, the number keys open by themselves (the big keypad in handheld
   mode, the touch keypad on phones) and close again afterwards. Select / the keypad button still open them

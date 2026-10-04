@@ -53,7 +53,7 @@ def help_controls():
     marks = [
         (1, at(menu, -18, 52)),
         (2, at(gear, 30, 46)),
-        (3, (wl["x0"] + 10, (wl["y0"] + wl["y1"]) / 2 - top + 52)),
+        (3, (by_key(j, -22)["cx"] - 112, by_key(j, -22)["y1"] - top + 22)),
         (4, at(keys, -46, 42)),
         (5, at(mp, 40, 44)),
         (6, (cx0 + cw / 2, cy0 + cw / 2)),

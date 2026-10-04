@@ -25,6 +25,7 @@ public final class GameActivity extends Activity {
     // The emulated phone lives for the whole process (it survives rotation and activity restarts).
     private static AndroidHost host;
     private static KeyPump keys;
+    private static volatile brewemu.doomrpg.DoomArt weaponArt;
     private static Brew brew;
     private static int gameW, gameH;
     private static volatile boolean paused;
@@ -53,7 +54,14 @@ public final class GameActivity extends Activity {
                 boolean large = Prefs.large(this);
                 gameW = large ? 240 : 176;
                 gameH = large ? 320 : 208;
-                brew = new Brew(host, Installer.read(g.mod), Installer.read(g.bar), g.barName, gameW, gameH, g.clsid);
+                final byte[] bar = Installer.read(g.bar);
+                brew = new Brew(host, Installer.read(g.mod), bar, g.barName, gameW, gameH, g.clsid);
+                // the weapon picker's pictures, read from the game file in the background
+                Thread t = new Thread("art") { public void run() {
+                    weaponArt = brewemu.doomrpg.DoomArt.load(bar);
+                    ui.post(new Runnable() { public void run() { if (view != null) view.setWeaponArt(weaponArt); } });
+                } };
+                t.setDaemon(true); t.start();
                 // this phone can vibrate and play sound together: lets the game offer its own Vibrate option
                 if (brew.enableDoomRpgVibrateOption()) vibrateOnByDefault(brew);
                 keys = new KeyPump(brew, host);
@@ -67,6 +75,7 @@ public final class GameActivity extends Activity {
         }
         view = new GameView(this, keys, gameW, gameH, handheldWanted() ? Deck.MODE_HANDHELD : Deck.MODE_TOUCH);
         view.settings = new Runnable() { public void run() { showSettings(); } };
+        if (weaponArt != null) view.setWeaponArt(weaponArt);
         host.view = view;
         setContentView(view);
         view.requestFocus();
@@ -414,6 +423,12 @@ public final class GameActivity extends Activity {
             if (e.getRepeatCount() == 0) { releaseSticks(); showSettings(); }
             return true;
         }
+        if (view != null && view.pickerOpen()) return pickerDown(code, k, e);
+        if ((code == KeyEvent.KEYCODE_BUTTON_L2 || code == KeyEvent.KEYCODE_BUTTON_R2) && view != null) {
+            // tap: previous / next weapon; hold: the weapon picker
+            if (e.getRepeatCount() == 0) { trigHoldKey = k; trigHoldFired = false; ui.removeCallbacks(trigHold); ui.postDelayed(trigHold, 450); }
+            return true;
+        }
         if (view != null && view.bigKeypad()) return bigKeypadDown(code, k, e);
         if (k == GameView.K_MENU) {
             if (e.getRepeatCount() == 0) { menuDown = true; menuHeld = false; ui.postDelayed(menuHold, 700); }
@@ -428,6 +443,14 @@ public final class GameActivity extends Activity {
         int k = map(code);
         if (k == 0 || keys == null) return super.onKeyUp(code, e);
         if (k == GameView.K_KEYPAD || k == GameView.K_SETTINGS) return true;
+        if (pickerKeys.remove(code)) return true;
+        if (view != null && view.pickerOpen()) return true;
+        if (code == KeyEvent.KEYCODE_BUTTON_L2 || code == KeyEvent.KEYCODE_BUTTON_R2) {
+            ui.removeCallbacks(trigHold);
+            if (!trigHoldFired && trigHoldKey == k) keys.tap(k);
+            trigHoldKey = 0;
+            return true;
+        }
         if (view != null && view.bigKeypad()) return bigKeypadUp(code, k);
         if (k == GameView.K_MENU) {
             ui.removeCallbacks(menuHold);
@@ -436,6 +459,37 @@ public final class GameActivity extends Activity {
             return true;
         }
         keys.release(k);
+        return true;
+    }
+
+    // ---- the weapon picker with a controller: d-pad / stick move, A takes the weapon, B (or L2 / R2) closes.
+    // Keys pressed while it is open are kept here so their release does nothing in the game.
+    private final java.util.HashSet<Integer> pickerKeys = new java.util.HashSet<Integer>();
+    private int trigHoldKey;
+    private boolean trigHoldFired;
+    /** L2 / R2 (button or analog) held: open the picker instead of changing weapon. */
+    private final Runnable trigHold = new Runnable() {
+        public void run() {
+            trigHoldFired = true;
+            if (view == null) return;
+            releaseStickKeys();
+            view.setPicker(true, true);
+            if (view.pickerOpen() && Prefs.vibrate(GameActivity.this)) view.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+        }
+    };
+
+    private boolean pickerDown(int code, int k, KeyEvent e) {
+        pickerKeys.add(code);
+        if (e.getRepeatCount() > 0 && k != GameView.K_UP && k != GameView.K_DOWN && k != GameView.K_LEFT && k != GameView.K_RIGHT) return true;
+        switch (k) {
+            case GameView.K_UP: view.pickerMove(0, -1); break;
+            case GameView.K_DOWN: view.pickerMove(0, 1); break;
+            case GameView.K_LEFT: view.pickerMove(-1, 0); break;
+            case GameView.K_RIGHT: view.pickerMove(1, 0); break;
+            case GameView.K_FIRE: view.pickerChoose(); break;
+            case GameView.K_MENU: case GameView.K_WPN_PREV: case GameView.K_WPN_NEXT: view.setPicker(false, false); break;
+            default: break;
+        }
         return true;
     }
 
@@ -488,7 +542,8 @@ public final class GameActivity extends Activity {
         float x = e.getAxisValue(MotionEvent.AXIS_HAT_X), y = e.getAxisValue(MotionEvent.AXIS_HAT_Y);
         if (Math.abs(x) < 0.5f) x = e.getAxisValue(MotionEvent.AXIS_X);
         if (Math.abs(y) < 0.5f) y = e.getAxisValue(MotionEvent.AXIS_Y);
-        boolean big = view != null && view.bigKeypad();
+        boolean pick = view != null && view.pickerOpen();
+        boolean big = view != null && (view.bigKeypad() || pick);
         if (!big) triggers(e);
         int nx = x <= -0.5f ? GameView.K_LEFT : x >= 0.5f ? GameView.K_RIGHT : 0;
         int ny = y <= -0.5f ? GameView.K_UP : y >= 0.5f ? GameView.K_DOWN : 0;
@@ -496,7 +551,10 @@ public final class GameActivity extends Activity {
             if (view != null) view.setHidden(true);
             if (stickX != 0 && stickX != nx) keys.release(stickX);
             if (stickY != 0 && stickY != ny) keys.release(stickY);
-            if (big) {
+            if (pick) {
+                if (ny != 0 && ny != stickY) view.pickerMove(0, ny == GameView.K_UP ? -1 : 1);
+                else if (nx != 0 && nx != stickX) view.pickerMove(nx == GameView.K_LEFT ? -1 : 1, 0);
+            } else if (big) {
                 if (ny != 0 && ny != stickY) view.moveCursor(0, ny == GameView.K_UP ? -1 : 1);
                 else if (nx != 0 && nx != stickX) view.moveCursor(nx == GameView.K_LEFT ? -1 : 1, 0);
             } else {
@@ -515,7 +573,11 @@ public final class GameActivity extends Activity {
     private final Runnable stickRepeat = new Runnable() {
         public void run() {
             if (keys == null || (stickX == 0 && stickY == 0)) return;
-            if (view != null && view.bigKeypad()) {
+            if (view != null && view.pickerOpen()) {
+                if (stickY != 0) view.pickerMove(0, stickY == GameView.K_UP ? -1 : 1);
+                else view.pickerMove(stickX == GameView.K_LEFT ? -1 : 1, 0);
+            }
+            else if (view != null && view.bigKeypad()) {
                 if (stickY != 0) view.moveCursor(0, stickY == GameView.K_UP ? -1 : 1);
                 else view.moveCursor(stickX == GameView.K_LEFT ? -1 : 1, 0);
             }
@@ -529,25 +591,39 @@ public final class GameActivity extends Activity {
     // trigger button is seen the axes are ignored, and an axis press waits briefly for that button so a
     // single pull never changes weapon twice.
     private boolean triggerKeys, trigL, trigR;
-    private final Runnable trigLTap = new Runnable() { public void run() { if (!triggerKeys && keys != null) keys.tap(GameView.K_WPN_PREV); } };
-    private final Runnable trigRTap = new Runnable() { public void run() { if (!triggerKeys && keys != null) keys.tap(GameView.K_WPN_NEXT); } };
-
     private void triggerButtons() {
+        if (!triggerKeys && trigHoldKey != 0 && (trigL || trigR)) { ui.removeCallbacks(trigHold); trigHoldKey = 0; }   // the axis had started it
         triggerKeys = true;
-        ui.removeCallbacks(trigLTap); ui.removeCallbacks(trigRTap);
     }
 
     private void triggers(MotionEvent e) {
         float l = Math.max(e.getAxisValue(MotionEvent.AXIS_LTRIGGER), e.getAxisValue(MotionEvent.AXIS_BRAKE));
         float r = Math.max(e.getAxisValue(MotionEvent.AXIS_RTRIGGER), e.getAxisValue(MotionEvent.AXIS_GAS));
         boolean nl = trigL ? l > 0.3f : l > 0.6f, nr = trigR ? r > 0.3f : r > 0.6f;   // hysteresis
-        if (nl && !trigL && !triggerKeys) { if (view != null) view.setHidden(true); ui.postDelayed(trigLTap, 80); }
-        if (nr && !trigR && !triggerKeys) { if (view != null) view.setHidden(true); ui.postDelayed(trigRTap, 80); }
+        if (!triggerKeys) {
+            // pulled: hold opens the picker; let go before that: previous / next weapon
+            if ((nl && !trigL) || (nr && !trigR)) {
+                if (view != null) view.setHidden(true);
+                trigHoldKey = nl && !trigL ? GameView.K_WPN_PREV : GameView.K_WPN_NEXT; trigHoldFired = false;
+                ui.removeCallbacks(trigHold); ui.postDelayed(trigHold, 450);
+            }
+            if ((trigL && !nl && trigHoldKey == GameView.K_WPN_PREV) || (trigR && !nr && trigHoldKey == GameView.K_WPN_NEXT)) {
+                ui.removeCallbacks(trigHold);
+                if (!trigHoldFired && keys != null) keys.tap(trigHoldKey);
+                trigHoldKey = 0;
+            }
+        }
         trigL = nl; trigR = nr;
     }
 
+    private void releaseStickKeys() {
+        ui.removeCallbacks(stickRepeat);
+        if (keys != null) { if (stickX != 0) keys.release(stickX); if (stickY != 0) keys.release(stickY); }
+        stickX = stickY = 0;
+    }
+
     private void releaseSticks() {
-        ui.removeCallbacks(trigLTap); ui.removeCallbacks(trigRTap);
+        ui.removeCallbacks(trigHold); trigHoldKey = 0;
         trigL = trigR = false;
         ui.removeCallbacks(stickRepeat);
         if (keys != null) { if (stickX != 0) keys.release(stickX); if (stickY != 0) keys.release(stickY); }

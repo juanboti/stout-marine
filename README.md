@@ -43,6 +43,17 @@ vibration, screen size, handheld mode, and export / import of saved games.
 | <img src="docs/settings.png" width="260" alt="Stout Marine settings"> | <img src="docs/settings_picture.png" width="260" alt="Picture setting"> | <img src="docs/minimap.png" width="200" alt="Mini-map"> |
 |  |  | top-right corner while you play: where you have been, walls, doors (yellow) and you (arrow) |
 
+### Weapon picker
+
+The weapon slot shows the weapon in hand, and small pictures beside its arrows show which weapon each arrow
+switches to. Tap the weapon in the middle (or hold L2 / R2 on a controller) for the weapon picker: all your
+weapons with their ammo in a grid; tap one (or d-pad + A) to switch to it. Stout Marine presses the game's own
+next / previous weapon keys for you, so the game's rules still apply (no switching to a weapon without ammo).
+The weapon pictures in the picker are read from your own copy of the game when the app starts; none are
+included in the app.
+
+<img src="docs/weapon_picker.png" width="700" alt="The weapon picker, explained">
+
 ## Controls
 
 A cross like a handheld's d-pad (up / down walk, left / right turn) with separate L and R side-step buttons:
@@ -53,6 +64,7 @@ A cross like a handheld's d-pad (up / down walk, left / right turn) with separat
 | Cross: left / right (turn) | Left / Right |
 | L / R (side-step left / right) | 1 / 3 |
 | Weapon slot, left and right arrows | * / 7 |
+| Weapon slot, the weapon in the middle | Weapon picker (Stout Marine's own) |
 | Hourglass (wait) | 9 |
 | Red crosshair (fire / use) | Select |
 | Menu (three bars) | Left soft key (Menu / Back) |
@@ -89,7 +101,7 @@ keypad, when opened). The setting "Handheld mode" can be Auto (the default), On 
 | D-pad / left stick up, down | Forward / back |
 | D-pad / left stick left, right | Turn |
 | L1 / R1 | Side-step (1 / 3) |
-| L2 / R2 | Previous / next weapon (* / 7), as buttons or analog triggers |
+| L2 / R2 | Previous / next weapon (* / 7), as buttons or analog triggers; **hold** for the weapon picker |
 
 **Door codes:** when the game asks for a door code, big number keys open by themselves (on phones too: the
 touch keypad) and close again when the code is entered. Select (or the keypad button) opens them any time.

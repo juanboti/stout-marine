@@ -24,6 +24,8 @@ final class GameView extends View {
     static final int K_KEYPAD = -20;
     /** Not a game key: opens Stout Marine's settings (the gear button; Start on a controller). */
     static final int K_SETTINGS = -21;
+    /** Not a game key: opens / closes the weapon picker (the weapon in the middle of the slot). */
+    static final int K_WEAPONS = -22;
 
 
     final KeyPump keys;
@@ -82,6 +84,7 @@ final class GameView extends View {
         mapPaint.setFilterBitmap(false);
         mapPaint.setAlpha(210);
         post(ticker);
+        setWeaponArt(null);   // plain icons until the game's pictures are read
     }
 
     // ---------------------------------------------------------------- frames
@@ -185,6 +188,7 @@ final class GameView extends View {
     /** Opens / closes the number keys; in handheld mode this switches to / from the big keypad. */
     void setKeypad(boolean on) {
         if (deck.keypadOn == on) return;
+        if (on && pickerOn) { pickerOn = false; pickerTouch = -1; }
         cursorPress(false);
         deck.keypadOn = on;
         if (on) { deck.cursor = 4; hidden = false; }      // cursor starts on 5
@@ -273,6 +277,141 @@ final class GameView extends View {
             c.drawBitmap(bmp, src, gameRect, bmpPaint);
         }
         drawMap(c);
+        drawPicker(c);
+    }
+
+    // ---------------------------------------------------------------- weapons: the slot and the picker
+    private final WeaponPicker picker = new WeaponPicker();
+    private boolean pickerOn, pickerController, pickerDirty;
+    private boolean weaponsKnown;
+    private Bitmap pickerBmp;
+    private final RectF pickerDst = new RectF();
+    private float pickerScale;
+    private int pickerTouch = -1;   // cell held by a finger
+    private final Paint pickerPaint = new Paint(), dimPaint = new Paint();
+    /** Weapon pictures (from the game file where it has them), normal and greyed; ammo icons by ammo type. */
+    private final Bitmap[] wpnPic = new Bitmap[12], wpnGrey = new Bitmap[12], ammoPic = new Bitmap[5];
+    { pickerPaint.setFilterBitmap(false); dimPaint.setColor(0x99000000); }
+
+    /** Pictures for the picker; call on the UI thread once they are decoded (null = use the simple icons). */
+    void setWeaponArt(brewemu.doomrpg.DoomArt art) {
+        for (int w = 0; w < 12; w++) {
+            int[] px; int pw, ph;
+            brewemu.doomrpg.DoomArt.Pic p = art != null ? art.weapons[w] : null;
+            if (w == 2) { px = WeaponArt.pistol(); pw = WeaponArt.PISTOL_W; ph = WeaponArt.PISTOL_H; }
+            else if (p != null) { px = p.px; pw = p.w; ph = p.h; }
+            else { String[] ic = Icons.WEAPON[w]; pw = ic[0].length(); ph = ic.length; px = WeaponArt.icon(ic, PixelArt.BONE); }
+            wpnPic[w] = Bitmap.createBitmap(px, pw, ph, Bitmap.Config.ARGB_8888);
+            wpnGrey[w] = Bitmap.createBitmap(WeaponArt.grey(px), pw, ph, Bitmap.Config.ARGB_8888);
+        }
+        for (int t = 0; t < 5; t++) {
+            brewemu.doomrpg.DoomArt.Pic p = art != null ? art.ammo[t] : null;
+            ammoPic[t] = p != null ? Bitmap.createBitmap(p.px, p.w, p.h, Bitmap.Config.ARGB_8888) : null;
+        }
+        pickerDirty = true; invalidate();
+    }
+
+    /** The player's weapons from the game (null = not playing right now). Called on the emulator thread. */
+    void weaponInfo(final brewemu.doomrpg.DoomWeapons wi) {
+        final boolean known = wi != null;
+        final int owned = known ? wi.owned : 0, weapon = known ? wi.weapon : -1, prev = known ? wi.prev() : -1, next = known ? wi.next() : -1;
+        final int[] ammo = known ? wi.ammo.clone() : null;
+        post(new Runnable() {
+            public void run() {
+                weaponsKnown = known;
+                deck.wpnCur = weapon; deck.wpnPrev = prev == weapon ? -1 : prev; deck.wpnNext = next == weapon ? -1 : next;
+                if (known) {
+                    picker.owned = owned; picker.weapon = weapon;
+                    System.arraycopy(ammo, 0, picker.ammo, 0, 6);
+                    if (picker.cursor >= picker.cells()) picker.cursor = 0;
+                    pickerDirty = true;
+                } else if (pickerOn) setPicker(false, false);
+                changed();
+            }
+        });
+    }
+
+    boolean pickerOpen() { return pickerOn; }
+
+    /** Opens / closes the weapon picker (only while the game is being played). */
+    void setPicker(boolean on, boolean controller) {
+        if (on && (!weaponsKnown || deck.bigKeypad)) return;
+        if (on && deck.keypadOn) setKeypad(false);
+        pickerOn = on; pickerController = controller; pickerTouch = -1;
+        if (on) picker.cursor = Math.max(0, picker.weapon);
+        pickerDirty = true; invalidate();
+    }
+
+    void pickerMove(int dx, int dy) { if (!pickerOn) return; picker.moveCursor(dx, dy); pickerController = true; pickerDirty = true; haptic(); invalidate(); }
+
+    /** Takes the weapon under the cursor (if the game allows it) and closes the picker. */
+    void pickerChoose() {
+        if (!pickerOn) return;
+        int w = picker.weaponAt(picker.cursor);
+        if (w < 0 || !picker.usable(w)) { pickerDirty = true; invalidate(); return; }
+        haptic();
+        if (w != picker.weapon) keys.selectWeapon(w);
+        setPicker(false, false);
+    }
+
+    private void drawPicker(Canvas c) {
+        if (!pickerOn) return;
+        if (pickerDirty || pickerBmp == null) {
+            PixelArt a = picker.paint(pickerController);
+            if (pickerBmp == null || pickerBmp.getWidth() != a.w || pickerBmp.getHeight() != a.h) pickerBmp = Bitmap.createBitmap(a.w, a.h, Bitmap.Config.ARGB_8888);
+            pickerBmp.setPixels(a.px, 0, a.w, 0, 0, a.w, a.h);
+            pickerDirty = false;
+        }
+        c.drawRect(gameRect, dimPaint);
+        // the window's pixel size: the deck's, or smaller if the window would not fit on the screen
+        float s = Math.min(deck.artPx, Math.min(getWidth() * 0.96f / pickerBmp.getWidth(), getHeight() * 0.96f / pickerBmp.getHeight()));
+        if (s >= 2) s = (float) Math.floor(s);
+        pickerScale = s;
+        float w = pickerBmp.getWidth() * s, h = pickerBmp.getHeight() * s;
+        float x = Math.max(0, Math.min(getWidth() - w, gameRect.centerX() - w / 2)), y = Math.max(0, Math.min(getHeight() - h, gameRect.centerY() - h / 2));
+        pickerDst.set(x, y, x + w, y + h);
+        c.drawBitmap(pickerBmp, null, pickerDst, pickerPaint);
+        for (int i = 0; i < picker.cells(); i++) {
+            int wpn = picker.weaponAt(i);
+            if (wpn < 0 || !picker.owns(wpn) || wpnPic[wpn] == null) continue;
+            Bitmap b = picker.usable(wpn) ? wpnPic[wpn] : wpnGrey[wpn];
+            int[] r = picker.picRect(i);
+            float rw = (r[2] - r[0] + 1) * s, rh = (r[3] - r[1] + 1) * s;
+            // the pistol drawing is sized like the long guns' pickups (64 x 17), so it looks as small as a pistol is
+            float k = wpn == 2 ? Math.min(rw / 64f, rh / 17f) : Math.min(rw / b.getWidth(), rh / b.getHeight());
+            if (k >= 1) k = (float) Math.floor(k);
+            float bw = b.getWidth() * k, bh = b.getHeight() * k, bx = x + r[0] * s + (rw - bw) / 2, by = y + r[1] * s + (rh - bh) / 2;
+            tmpDst.set(bx, by, bx + bw, by + bh);
+            pickerPaint.setFilterBitmap(k < 1);
+            c.drawBitmap(b, null, tmpDst, pickerPaint);
+            pickerPaint.setFilterBitmap(false);
+            if (wpn < 9 && brewemu.doomrpg.DoomWeapons.AMMO_USE[wpn] > 0) {
+                Bitmap ab = ammoPic[brewemu.doomrpg.DoomWeapons.AMMO_TYPE[wpn]];
+                if (ab == null) continue;
+                int[] p = picker.ammoIconAt(i);
+                float ak = Math.max(1, (float) Math.floor(8 * s / ab.getHeight()));
+                float aw = ab.getWidth() * ak, ah = ab.getHeight() * ak, ax = x + p[0] * s - aw, ay = y + p[1] * s - ah / 2;
+                tmpDst.set(ax, ay, ax + aw, ay + ah);
+                c.drawBitmap(ab, null, tmpDst, pickerPaint);
+            }
+        }
+    }
+    private final RectF tmpDst = new RectF();
+
+    /** Touch while the picker is open: a tap on a weapon takes it, a tap outside closes. Returns true if handled. */
+    private boolean pickerTouch(int act, int id, float x, float y) {
+        if (!pickerOn) return false;
+        float s = pickerScale > 0 ? pickerScale : deck.artPx;
+        int cell = pickerDst.contains(x, y) ? picker.cellAt((x - pickerDst.left) / s, (y - pickerDst.top) / s) : -1;
+        if (act == MotionEvent.ACTION_DOWN || act == MotionEvent.ACTION_POINTER_DOWN) {
+            pickerTouch = cell;
+            if (cell >= 0) { picker.cursor = cell; pickerController = false; pickerDirty = true; invalidate(); }
+        } else if (act == MotionEvent.ACTION_UP || act == MotionEvent.ACTION_POINTER_UP) {
+            if (pickerTouch >= 0 && cell == pickerTouch) pickerChoose();
+            else if (pickerTouch < 0 && !pickerDst.contains(x, y)) setPicker(false, false);
+            pickerTouch = -1;
+        } else if (act == MotionEvent.ACTION_CANCEL) pickerTouch = -1;
+        return true;
     }
 
     private void drawMap(Canvas c) {
@@ -316,6 +455,8 @@ final class GameView extends View {
         setHidden(false);
         int act = e.getActionMasked();
         int idx = e.getActionIndex();
+        if (pickerOn && act != MotionEvent.ACTION_MOVE) { pickerTouch(act, e.getPointerId(idx), e.getX(idx), e.getY(idx)); return true; }
+        if (pickerOn) return true;
         switch (act) {
             case MotionEvent.ACTION_DOWN:
             case MotionEvent.ACTION_POINTER_DOWN:
@@ -408,6 +549,7 @@ final class GameView extends View {
                 b.pointer = -1; any = true;
                 if (b.longPress) { if (!b.longFired && !cancel) keys.tap(b.key); }
                 else if (b.key == K_SETTINGS) { if (!cancel && settings != null) settings.run(); }
+                else if (b.key == K_WEAPONS) { if (!cancel) setPicker(!pickerOn, false); }
                 else if (b.key != 0) keys.release(b.key);
             }
         }
