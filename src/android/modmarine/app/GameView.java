@@ -74,6 +74,9 @@ final class GameView extends View {
         dp = c.getResources().getDisplayMetrics().density;
         deck = new Deck(dp, gameW, gameH);
         deck.mode = mode;
+        deck.xpOn = Prefs.xpBar(c);
+        Deck.loadEdits(Prefs.touchEdits(c, true), deck.editsP);
+        Deck.loadEdits(Prefs.touchEdits(c, false), deck.editsL);
         setFocusable(true);
         setFocusableInTouchMode(true);
         setKeepScreenOn(true);
@@ -111,7 +114,13 @@ final class GameView extends View {
     private final RectF mapDst = new RectF();
 
     /** A new mini-map picture (size x size), or null to hide it. Called on the emulator thread. */
-    void submitMap(int[] px, int size) {
+    void submitMap(int[] px, int size) { submitMap(px, size, false); }
+
+    private volatile boolean mapBig;
+
+    /** big: the larger, more see-through map. */
+    void submitMap(int[] px, int size, boolean big) {
+        mapBig = big;
         synchronized (frameLock) {
             if (px == null) { mapSize = 0; }
             else {
@@ -158,6 +167,156 @@ final class GameView extends View {
     }
 
     int mode() { return deck.mode; }
+
+    /** Lays the deck out again (after a setting that changes it). */
+    void relayout() { if (getWidth() > 0) onSizeChanged(getWidth(), getHeight(), getWidth(), getHeight()); invalidate(); }
+
+    // ---------------------------------------------------------------- touch-controls editor
+    /** Edit mode is possible: the touch layout (not handheld). */
+    boolean canEditTouch() { return deck.editable && deck.mode == Deck.MODE_TOUCH && !deck.handheldLayout; }
+    private PixelMenu editMenu;
+    private int editPointer = -1;
+    private boolean editOnWindow;
+    private float editX, editY;
+    private int[] editBase;
+
+    /** Opens the editor (from the settings). */
+    void startEditing() {
+        if (!canEditTouch()) return;
+        closeAllMenus();
+        setKeypad(false);
+        deck.editing = true; deck.selected = null; deck.dragging = null;
+        editMenu = new PixelMenu(); editMenu.editor = true;
+        editMenu.onClose = new Runnable() { public void run() { stopEditing(); } };
+        fillEditMenu();
+        openMenu(editMenu, false);
+        editMenu.cursor = -1;
+        changed();
+    }
+
+    private void stopEditing() {
+        deck.editing = false; deck.selected = null; deck.dragging = null; editMenu = null; editPointer = -1;
+        saveEdits();
+        relayout();
+    }
+
+    private java.util.HashMap<String, int[]> curEdits() { return deck.edits(deck.portraitLayout); }
+
+    private void saveEdits() {
+        Prefs.setTouchEdits(getContext(), true, Deck.saveEdits(deck.editsP));
+        Prefs.setTouchEdits(getContext(), false, Deck.saveEdits(deck.editsL));
+    }
+
+    private void fillEditMenu() {
+        final PixelMenu m = editMenu;
+        if (m == null) return;
+        int cur = m.cursor;
+        m.items.clear(); m.message.clear();
+        m.title = "EDIT TOUCH CONTROLS"; m.corner = deck.portraitLayout ? "PORTRAIT" : "LANDSCAPE";
+        m.say("Drag a group to move it. Tap one to choose it.");
+        final Deck.Group g = deck.selected != null ? deck.group(deck.selected) : null;
+        if (g != null && g.sizable) {
+            int[] e = curEdits().get(g.id);
+            final int size = e != null ? e[2] : 100;
+            PixelMenu.Item it = m.add(PixelMenu.CHOICE, Icons.I_SCR, "SIZE: " + Deck.groupName(g.id), size + "%", null);
+            it.left = new Runnable() { public void run() { resize(g.id, size - 10); } };
+            it.right = new Runnable() { public void run() { resize(g.id, size + 10); } };
+            it.act = new Runnable() { public void run() { resize(g.id, size >= Deck.SIZE_MAX ? Deck.SIZE_MIN : size + 10); } };
+        } else m.add(PixelMenu.INFO, null, g == null ? "NOTHING CHOSEN" : Deck.groupName(g.id), g == null ? "" : "SAME SIZE", null);
+        m.add(PixelMenu.OPEN, Icons.I_REDO, "SWAP LEFT / RIGHT", null, new Runnable() { public void run() { swapSides(); } });
+        m.add(PixelMenu.BUTTON, null, "RESET TO DEFAULT", null, new Runnable() { public void run() {
+            curEdits().clear(); deck.selected = null; relayout(); saveEdits(); fillEditMenu(); toast("Touch controls reset."); } }).gap = true;
+        m.add(PixelMenu.BUTTON, null, "DONE", null, new Runnable() { public void run() { closeMenu(); } });
+        m.cursor = cur < m.items.size() ? cur : -1;
+        menuChanged();
+    }
+
+    /** Changes a group's size; a size with no room is not kept. */
+    private void resize(String id, int size) {
+        size = Math.max(Deck.SIZE_MIN, Math.min(Deck.SIZE_MAX, size));
+        int[] old = curEdits().get(id);
+        int[] e = old != null ? old.clone() : new int[]{0, 0, 100};
+        e[2] = size;
+        if (!deck.placeNear(getWidth(), getHeight(), id, e, 8)) toast("No room for that size here.");
+        relayout(); saveEdits(); fillEditMenu();
+    }
+
+    /** Mirrors every group left / right (left-handed and back); each goes to its mirrored place or the nearest free one. */
+    private void swapSides() {
+        int stuck = deck.swapSides(getWidth(), getHeight());
+        relayout(); saveEdits(); fillEditMenu();
+        if (stuck > 0) toast("Some controls had no room on the other side.");
+    }
+
+    private void editorTouch(MotionEvent e) {
+        int act = e.getActionMasked(), idx = e.getActionIndex();
+        float x = e.getX(idx), y = e.getY(idx);
+        if (act == MotionEvent.ACTION_DOWN || act == MotionEvent.ACTION_POINTER_DOWN) {
+            if (editPointer != -1) return;
+            editPointer = e.getPointerId(idx);
+            editOnWindow = menuDst.contains(x, y);
+            if (editOnWindow) { menuTouchEvent(act, x, y); return; }
+            Deck.Group g = deck.groupAt(x / deck.artPx, y / deck.artPx);
+            deck.selected = g != null ? g.id : null;
+            deck.dragging = g != null ? g.id : null;
+            if (g != null) {
+                int[] base = curEdits().get(g.id);
+                editBase = base != null ? base.clone() : new int[]{0, 0, 100};
+                editX = x; editY = y;
+                haptic();
+            }
+            fillEditMenu(); changed();
+        } else if (act == MotionEvent.ACTION_MOVE) {
+            int pi = e.findPointerIndex(editPointer);
+            if (pi < 0 || editOnWindow || deck.dragging == null) return;
+            int dx = Math.round((e.getX(pi) - editX) / deck.artPx), dy = Math.round((e.getY(pi) - editY) / deck.artPx);
+            int[] cur = curEdits().get(deck.dragging);
+            if (cur != null && cur[0] == editBase[0] + dx && cur[1] == editBase[1] + dy) return;
+            curEdits().put(deck.dragging, new int[]{editBase[0] + dx, editBase[1] + dy, editBase[2]});
+            relayoutDeck();
+        } else if (act == MotionEvent.ACTION_UP || act == MotionEvent.ACTION_POINTER_UP || act == MotionEvent.ACTION_CANCEL) {
+            if (act != MotionEvent.ACTION_CANCEL && e.getPointerId(idx) != editPointer) return;
+            editPointer = -1;
+            if (editOnWindow) { menuTouchEvent(act, x, y); return; }
+            String id = deck.dragging;
+            deck.dragging = null;
+            if (id != null) {
+                Deck.Group g = deck.group(id);
+                int[] want = curEdits().get(id);
+                if (want == null) want = new int[]{0, 0, 100};
+                if (g == null || g.bad || deck.disabled.contains(id)) {
+                    // no room right there: the nearest free place, or back to where it was
+                    if (editBase[0] == 0 && editBase[1] == 0 && editBase[2] == 100) curEdits().remove(id); else curEdits().put(id, editBase);
+                    deck.layout(getWidth(), getHeight());
+                    if (!deck.placeNear(getWidth(), getHeight(), id, want, 12)) toast("No room there.");
+                } else deck.placeNear(getWidth(), getHeight(), id, want, 0);   // tidies "no change" away
+                relayout(); saveEdits(); fillEditMenu();
+            }
+        }
+    }
+
+    /** Lays the deck out again without touching the game picture (while dragging). */
+    private void relayoutDeck() {
+        deck.layout(getWidth(), getHeight());
+        changed();
+    }
+
+    // ---------------------------------------------------------------- XP bar
+    /** Shows or hides the XP bar (the layout makes room for it). */
+    void setXpBar(boolean on) {
+        if (deck.xpOn == on) return;
+        deck.xpOn = on;
+        if (getWidth() > 0) onSizeChanged(getWidth(), getHeight(), getWidth(), getHeight());
+        invalidate();
+    }
+
+    /** Level, XP and XP needed from the game ({level, xp, next}); emulator thread. Kept while the game shows menus. */
+    void xpInfo(final int level, final int xp, final int next) {
+        post(new Runnable() { public void run() {
+            deck.xpLevel = level; deck.xp = xp; deck.xpNext = next;
+            if (deck.xpOn) changed();
+        } });
+    }
 
     // ---------------------------------------------------------------- number keys
     private int cursorHeld;   // game key held by the controller's A on the big keypad (0 = none)
@@ -238,6 +397,7 @@ final class GameView extends View {
         deckBmp = Bitmap.createBitmap(deck.artW, deck.artH, Bitmap.Config.ARGB_8888);
         deckDst.set(0, 0, deck.artW * deck.artPx, deck.artH * deck.artPx);
         deckDirty = true;
+        if (editMenu != null) { if (!canEditTouch()) closeMenu(); else fillEditMenu(); }
     }
 
     // ---------------------------------------------------------------- drawing
@@ -278,7 +438,272 @@ final class GameView extends View {
         }
         drawMap(c);
         drawPicker(c);
+        drawMenu(c);
+        drawTour(c);
+        drawToast(c);
     }
+
+    // ---------------------------------------------------------------- pixel windows (settings, questions, notes)
+    private final java.util.ArrayList<PixelMenu> menus = new java.util.ArrayList<PixelMenu>();
+    private boolean menuController, menuDirty;
+    private Bitmap menuBmp;
+    private final RectF menuDst = new RectF();
+    private float menuScale;
+    private int menuTouch = -2;
+
+    boolean menuOpen() { return !menus.isEmpty(); }
+    PixelMenu topMenu() { return menus.isEmpty() ? null : menus.get(menus.size() - 1); }
+
+    /** Opens a window on top of any open one (controller: the cursor starts on the first row). */
+    void openMenu(PixelMenu m, boolean controller) {
+        if (pickerOn) setPicker(false, false);
+        if (deck.keypadOn) setKeypad(false);
+        releaseTouches();
+        menuController = controller;
+        if (m.cursor < 0) m.firstSelectable();
+        menus.add(m);
+        menuDirty = true; invalidate();
+    }
+
+    /** Closes the top window (runs its onClose). */
+    void closeMenu() {
+        if (menus.isEmpty()) return;
+        PixelMenu m = menus.remove(menus.size() - 1);
+        menuDirty = true; invalidate();
+        if (m.onClose != null) m.onClose.run();
+    }
+
+    /** Closes every window without running their onClose. */
+    /** Lets go of deck buttons held by fingers (their release goes to the window that just opened). */
+    private void releaseTouches() {
+        for (int i = 0; i < deck.buttons.size(); i++) {
+            Deck.Btn b = deck.buttons.get(i);
+            if (b.pointer < 0) continue;
+            if (!b.longPress && b.key != 0 && b.key != K_SETTINGS && b.key != K_WEAPONS) keys.release(b.key);
+            b.pointer = -1;
+        }
+        for (int i = 0; i < deck.keypad.size(); i++) { Deck.Btn b = deck.keypad.get(i); if (b.pointer >= 0) { keys.release(b.key); b.pointer = -1; } }
+        swPointer = -1; swKey = 0;
+        changed();
+    }
+
+    void closeAllMenus() { menus.clear(); menuDirty = true; invalidate(); }
+
+    /** The top window's rows changed (call after changing its items). */
+    void menuChanged() { menuDirty = true; invalidate(); }
+
+    void menuMove(int d) { PixelMenu m = topMenu(); if (m == null) return; menuController = true; m.move(d); haptic(); menuChanged(); }
+
+    /** A (or a tap): the row's action. */
+    void menuActivate() {
+        PixelMenu m = topMenu();
+        if (m == null || m.cursor < 0 || m.cursor >= m.items.size()) return;
+        PixelMenu.Item it = m.items.get(m.cursor);
+        if (!it.selectable()) return;
+        haptic();
+        if (it.act != null) it.act.run();
+        menuChanged();
+    }
+
+    /** Left / right on a row that has a value. */
+    void menuSide(int d) {
+        PixelMenu m = topMenu();
+        if (m == null || m.cursor < 0) return;
+        PixelMenu.Item it = m.items.get(m.cursor);
+        Runnable r = d < 0 ? it.left : it.right;
+        if (r == null && (it.kind == PixelMenu.SWITCH)) r = it.act;
+        if (r != null) { haptic(); r.run(); menuChanged(); }
+    }
+
+    private void drawMenu(Canvas c) {
+        PixelMenu m = topMenu();
+        if (m == null) return;
+        if (menuDirty || menuBmp == null) {
+            PixelArt a = m.paint(menuController);
+            if (menuBmp == null || menuBmp.getWidth() != a.w || menuBmp.getHeight() != a.h) menuBmp = Bitmap.createBitmap(a.w, a.h, Bitmap.Config.ARGB_8888);
+            menuBmp.setPixels(a.px, 0, a.w, 0, 0, a.w, a.h);
+            menuDirty = false;
+        }
+        float s, w, h, x, y;
+        if (m.editor) {
+            // the editor: over the game picture only, so the whole deck stays free to drag
+            c.drawRect(gameRect, dimPaint); c.drawRect(gameRect, dimPaint);
+            s = Math.min(deck.artPx, Math.min(gameRect.width() * 0.98f / menuBmp.getWidth(), gameRect.height() * 0.96f / menuBmp.getHeight()));
+            if (s >= 2) s = (float) Math.floor(s);
+            w = menuBmp.getWidth() * s; h = menuBmp.getHeight() * s;
+            x = gameRect.centerX() - w / 2; y = gameRect.centerY() - h / 2;
+        } else {
+            c.drawRect(0, 0, getWidth(), getHeight(), dimPaint);
+            s = Math.min(deck.artPx, Math.min(getWidth() * 0.96f / menuBmp.getWidth(), getHeight() * 0.96f / menuBmp.getHeight()));
+            if (s >= 2) s = (float) Math.floor(s);
+            w = menuBmp.getWidth() * s; h = menuBmp.getHeight() * s;
+            float cy = deck.mode == Deck.MODE_TOUCH && getHeight() > getWidth() ? gameRect.centerY() : getHeight() / 2f;
+            x = (getWidth() - w) / 2; y = Math.max(0, Math.min(getHeight() - h, cy - h / 2));
+        }
+        menuScale = s;
+        menuDst.set(x, y, x + w, y + h);
+        c.drawBitmap(menuBmp, null, menuDst, pickerPaint);
+        // pictures on RADIO rows (the Picture choice): a piece of the game as each choice shows it
+        for (int i = 0; i < m.items.size(); i++) {
+            PixelMenu.Item it = m.items.get(i);
+            if (it.preview < 0 || it.preview >= previews.length || previews[it.preview] == null) continue;
+            int[] r = m.previewRect(i);
+            tmpDst.set(x + r[0] * s, y + r[1] * s, x + (r[2] + 1) * s, y + (r[3] + 1) * s);
+            pickerPaint.setFilterBitmap(it.preview != Prefs.PICTURE_SHARP);
+            c.drawBitmap(previews[it.preview], null, tmpDst, pickerPaint);
+            pickerPaint.setFilterBitmap(false);
+        }
+    }
+
+    private boolean menuTouchEvent(int act, float x, float y) {
+        PixelMenu m = topMenu();
+        if (m == null) return false;
+        float s = menuScale > 0 ? menuScale : deck.artPx;
+        int row = menuDst.contains(x, y) ? m.itemAt((x - menuDst.left) / s, (y - menuDst.top) / s) : -1;
+        if (act == MotionEvent.ACTION_DOWN || act == MotionEvent.ACTION_POINTER_DOWN) {
+            menuTouch = menuDst.contains(x, y) ? row : -3;
+            if (row >= 0) { m.cursor = row; menuController = false; menuChanged(); }
+        } else if (act == MotionEvent.ACTION_UP || act == MotionEvent.ACTION_POINTER_UP) {
+            if (menuTouch >= 0 && row == menuTouch) menuActivate();
+            else if (menuTouch == -3 && !menuDst.contains(x, y) && !m.editor) closeMenu();
+            menuTouch = -2;
+        } else if (act == MotionEvent.ACTION_CANCEL) menuTouch = -2;
+        return true;
+    }
+
+    // picture previews for the Picture choice: the middle of the current frame, as each picture setting shows it
+    final Bitmap[] previews = new Bitmap[4];
+
+    void makePreviews() {
+        int[] f; int w, h;
+        synchronized (frameLock) { if (front == null) return; f = front.clone(); w = fw; h = fh; }
+        int pw = Math.min(w, 34), ph = Math.min(h, 14), x0 = (w - pw) / 2, y0 = Math.max(0, h * 2 / 5 - ph / 2);
+        int[] crop = new int[pw * ph];
+        for (int y = 0; y < ph; y++) System.arraycopy(f, (y0 + y) * w + x0, crop, y * pw, pw);
+        previews[Prefs.PICTURE_SHARP] = Bitmap.createBitmap(crop, pw, ph, Bitmap.Config.ARGB_8888);
+        previews[Prefs.PICTURE_SMOOTH] = previews[Prefs.PICTURE_SHARP];
+        int[] dst = new int[pw * 4 * ph * 4], yuv = new int[pw * ph];
+        brewemu.video.Hqx.scale(crop, pw, ph, 4, dst, yuv);
+        previews[Prefs.PICTURE_HQ] = Bitmap.createBitmap(dst, pw * 4, ph * 4, Bitmap.Config.ARGB_8888);
+        int[] dst2 = new int[pw * 4 * ph * 4];
+        brewemu.video.Xbr.scale(crop, pw, ph, 4, dst2, yuv);
+        previews[Prefs.PICTURE_XBR] = Bitmap.createBitmap(dst2, pw * 4, ph * 4, Bitmap.Config.ARGB_8888);
+    }
+
+    // ---------------------------------------------------------------- pixel notes (a short message at the top)
+    private String toastText;
+    private long toastUntil;
+    private Bitmap toastBmp;
+
+    void toast(String text) {
+        toastText = text.toUpperCase(); toastUntil = SystemClock.uptimeMillis() + 3200; toastBmp = null;
+        invalidate();
+        postDelayed(new Runnable() { public void run() { invalidate(); } }, 3300);
+    }
+
+    private void drawToast(Canvas c) {
+        if (toastText == null || SystemClock.uptimeMillis() > toastUntil) return;
+        if (toastBmp == null) {
+            PixelMenu m = new PixelMenu(); m.say(toastText);
+            int lines = m.message.size(), H = lines * 7 + 8;
+            PixelArt a = new PixelArt(PixelMenu.W + 2, H + 2);
+            a.bevelBox(1, 1, PixelMenu.W, H, PixelArt.D3, PixelArt.OR, PixelArt.R1, false);
+            int y = 5;
+            for (String l : m.message) { a.text(l, 1 + PixelMenu.W / 2 - PixelArt.textWidth(l, 1) / 2, y, PixelArt.BONE, 1); y += 7; }
+            toastBmp = Bitmap.createBitmap(a.px, a.w, a.h, Bitmap.Config.ARGB_8888);
+        }
+        float s = Math.min(deck.artPx, getWidth() * 0.9f / toastBmp.getWidth());
+        if (s >= 2) s = (float) Math.floor(s);
+        float w = toastBmp.getWidth() * s, h = toastBmp.getHeight() * s, x = (getWidth() - w) / 2, y = gameRect.top + gameRect.height() * 0.08f;
+        tmpDst.set(x, y, x + w, y + h);
+        c.drawBitmap(toastBmp, null, tmpDst, pickerPaint);
+    }
+
+    // ---------------------------------------------------------------- first-run tour (touch controls)
+    private int tourStep = -1;
+    private Runnable tourDone;
+    private static final String[][] TOUR = {
+        {"WALK AND TURN", "UP / DOWN: STEP. LEFT / RIGHT: TURN. HOLD TO KEEP GOING."},
+        {"SIDE-STEP", "L AND R STEP SIDEWAYS. THE HOURGLASS WAITS A TURN."},
+        {"FIRE / USE", "ATTACK, OPEN DOORS, TALK AND PICK THINGS UP."},
+        {"WEAPONS", "ARROWS: PREVIOUS / NEXT. TAP THE GUN FOR ALL YOUR WEAPONS."},
+        {"MENU AND SETTINGS", "THREE BARS: THE GAME'S MENU (SAVE GAME IS THERE). GEAR: SETTINGS AND HELP."},
+    };
+
+    boolean tourActive() { return tourStep >= 0; }
+
+    /** The tour is for the touch layout (not the handheld one). */
+    boolean touchTourAvailable() { return deck.mode == Deck.MODE_TOUCH && !deck.handheldLayout; }
+
+    /** Shows the short first-run tour (touch layout only). */
+    void startTour(Runnable done) {
+        if (deck.mode != Deck.MODE_TOUCH || deck.handheldLayout) { if (done != null) done.run(); return; }
+        releaseTouches();
+        tourStep = 0; tourDone = done; invalidate();
+    }
+
+    void tourNext(boolean skip) {
+        tourStep = skip ? TOUR.length : tourStep + 1;
+        if (tourStep >= TOUR.length) { tourStep = -1; Runnable d = tourDone; tourDone = null; if (d != null) d.run(); }
+        invalidate();
+    }
+
+    /** Screen rectangle (art pixels: x0, y0, x1, y1) of what the tour step points at. */
+    private int[] tourTarget(int step) {
+        int x0 = Integer.MAX_VALUE, y0 = Integer.MAX_VALUE, x1 = Integer.MIN_VALUE, y1 = Integer.MIN_VALUE;
+        for (int i = 0; i < deck.buttons.size(); i++) {
+            Deck.Btn b = deck.buttons.get(i);
+            boolean hit;
+            switch (step) {
+                case 0: hit = b.kind == Deck.CELL; break;
+                case 1: hit = b.kind == Deck.SHOULDER || b.key == K_WAIT; break;
+                case 2: hit = b.kind == Deck.FIRE; break;
+                case 3: hit = b.kind == Deck.SLOT; break;
+                default: hit = b.key == K_MENU || b.key == K_SETTINGS; break;
+            }
+            if (!hit) continue;
+            int bx0, by0, bx1, by1;
+            if (b.kind == Deck.DISC || b.kind == Deck.FIRE) { bx0 = b.cx - b.r - 1; by0 = b.cy - b.r - 1; bx1 = b.cx + b.r + 1; by1 = b.cy + b.r + 1; }
+            else { bx0 = b.x0; by0 = b.y0; bx1 = b.x1; by1 = b.y1; }
+            x0 = Math.min(x0, bx0); y0 = Math.min(y0, by0); x1 = Math.max(x1, bx1); y1 = Math.max(y1, by1);
+        }
+        return x0 == Integer.MAX_VALUE ? null : new int[]{x0 - 2, y0 - 2, x1 + 2, y1 + 2};
+    }
+
+    private final Paint tourPaint = new Paint();
+    private void drawTour(Canvas c) {
+        if (tourStep < 0) return;
+        int[] t = tourTarget(tourStep);
+        float a = deck.artPx;
+        tourPaint.setColor(0xB0000000); tourPaint.setStyle(Paint.Style.FILL);
+        if (t != null) {
+            float x0 = t[0] * a, y0 = t[1] * a, x1 = (t[2] + 1) * a, y1 = (t[3] + 1) * a;
+            c.drawRect(0, 0, getWidth(), y0, tourPaint); c.drawRect(0, y1, getWidth(), getHeight(), tourPaint);
+            c.drawRect(0, y0, x0, y1, tourPaint); c.drawRect(x1, y0, getWidth(), y1, tourPaint);
+            tourPaint.setStyle(Paint.Style.STROKE); tourPaint.setStrokeWidth(Math.max(2, a * 0.75f)); tourPaint.setColor(0xFFF48C28);
+            c.drawRect(x0, y0, x1, y1, tourPaint);
+        } else c.drawRect(0, 0, getWidth(), getHeight(), tourPaint);
+        if (tourBmp == null || tourBmpStep != tourStep) {
+            PixelMenu m = new PixelMenu();
+            m.title = TOUR[tourStep][0]; m.corner = (tourStep + 1) + "/" + TOUR.length;
+            m.say(TOUR[tourStep][1]);
+            m.hintTouch = "TAP: NEXT    SKIP: TAP HERE";
+            PixelArt art = m.paint(false);
+            tourBmp = Bitmap.createBitmap(art.px, art.w, art.h, Bitmap.Config.ARGB_8888);
+            tourBmpStep = tourStep;
+        }
+        Bitmap b = tourBmp;
+        float s = Math.min(a, getWidth() * 0.94f / b.getWidth());
+        if (s >= 2) s = (float) Math.floor(s);
+        float w = b.getWidth() * s, h = b.getHeight() * s, x = (getWidth() - w) / 2;
+        float y = t != null && t[1] * a > getHeight() / 2f ? Math.max(0, t[1] * a - h - a * 4) : gameRect.centerY() - h / 2;
+        if (t != null && y < gameRect.top) y = gameRect.top + a * 4;
+        tourBox.set(x, y, x + w, y + h);
+        c.drawBitmap(b, null, tourBox, pickerPaint);
+    }
+    private final RectF tourBox = new RectF();
+    private Bitmap tourBmp;
+    private int tourBmpStep = -1;
 
     // ---------------------------------------------------------------- weapons: the slot and the picker
     private final WeaponPicker picker = new WeaponPicker();
@@ -335,7 +760,7 @@ final class GameView extends View {
 
     /** Opens / closes the weapon picker (only while the game is being played). */
     void setPicker(boolean on, boolean controller) {
-        if (on && (!weaponsKnown || deck.bigKeypad)) return;
+        if (on && (!weaponsKnown || deck.bigKeypad || !menus.isEmpty() || tourStep >= 0)) return;
         if (on && deck.keypadOn) setKeypad(false);
         pickerOn = on; pickerController = controller; pickerTouch = -1;
         if (on) picker.cursor = Math.max(0, picker.weapon);
@@ -424,6 +849,7 @@ final class GameView extends View {
         }
         // in game pixels: 3 from the right edge, just below the game's message bar at the top
         float s = gameRect.width() / gw;
+        mapPaint.setAlpha(mapBig ? 165 : 210);
         mapDst.set(gameRect.right - (size + 3) * s, gameRect.top + 21 * s, gameRect.right - 3 * s, gameRect.top + (21 + size) * s);
         c.drawBitmap(mapBmp, null, mapDst, mapPaint);
     }
@@ -431,6 +857,7 @@ final class GameView extends View {
     // ---------------------------------------------------------------- input
     /** Button-tap feedback for this app only; follows the app's Vibration setting, never changes phone settings. */
     private void haptic() { if (Prefs.vibrate(getContext())) performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY); }
+    void hapticTap() { haptic(); }
 
     /** Hides the touch deck while a controller is used (touch mode only; handheld panels always show). */
     void setHidden(boolean h) {
@@ -455,6 +882,16 @@ final class GameView extends View {
         setHidden(false);
         int act = e.getActionMasked();
         int idx = e.getActionIndex();
+        if (tourStep >= 0) {
+            if (act == MotionEvent.ACTION_UP) {
+                // the hint line at the bottom of the box skips the rest
+                boolean skip = tourBox.contains(e.getX(idx), e.getY(idx)) && e.getY(idx) > tourBox.bottom - tourBox.height() * 0.2f;
+                haptic(); tourNext(skip);
+            }
+            return true;
+        }
+        if (!menus.isEmpty() && topMenu().editor) { editorTouch(e); return true; }
+        if (!menus.isEmpty()) { if (act != MotionEvent.ACTION_MOVE) menuTouchEvent(act, e.getX(idx), e.getY(idx)); return true; }
         if (pickerOn && act != MotionEvent.ACTION_MOVE) { pickerTouch(act, e.getPointerId(idx), e.getX(idx), e.getY(idx)); return true; }
         if (pickerOn) return true;
         switch (act) {

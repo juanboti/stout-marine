@@ -83,7 +83,7 @@ final class WeaponPicker {
         if (w >= 0 && owns(w) && !usable(w)) name += "  EMPTY";
         int fy = TOP + rows() * CH + (rows() - 1) * GAP + 1;
         a.text(name, 1 + W / 2 - PixelArt.textWidth(name, 1) / 2, fy + 3, OR2, 1);
-        String hint = controller ? "DPAD + A    B CLOSE" : "TAP A WEAPON";
+        String hint = controller ? "DPAD + " + PadBinds.nameOf(PadBinds.FIRE) + "    " + PadBinds.nameOf(PadBinds.MENU) + " CLOSE" : "TAP A WEAPON";
         a.text(hint, 1 + W / 2 - PixelArt.textWidth(hint, 1) / 2, fy + 12, BONE2, 1);
         return a;
     }

@@ -31,17 +31,49 @@ exported to a `.zip` and imported again (settings, Export / Import saved games).
 | Touch controls (phone) | Handheld mode | Door codes on a handheld |
 | :---: | :---: | :---: |
 | <img src="apk/res/drawable-nodpi/help_controls.png" width="260" alt="Touch controls"> | <img src="apk/res/drawable-nodpi/help_handheld.png" width="260" alt="Handheld mode"> | <img src="apk/res/drawable-nodpi/help_bigkeypad.png" width="260" alt="Big keypad"> |
-| 1 menu, 2 gear (settings), 3 weapon, 4 keypad, 5 map, 6 cross (walk, turn), 7 L / R side-step, 8 wait, 9 fire | the game in the middle at a sharp size, a button guide beside it | big number keys, worked with the d-pad and A |
+| 1 menu, 2 gear (settings), 3 weapon, 4 keypad, 5 map, 6 cross (walk, turn), 7 L / R side-step, 8 wait, 9 fire, 10 XP bar | the game in the middle at a sharp size, a button guide beside it | big number keys, worked with the d-pad and A |
 
 ### Settings
 
-Tap the gear (or press Start on a controller) for Stout Marine's own settings: help, picture filter, mini-map,
-vibration, screen size, handheld mode, and export / import of saved games.
+Tap the gear (or press Start on a controller) for Stout Marine's own settings, drawn in the same pixel style
+as the controls: help, save now, stats, picture filter (with a small preview of each), mini-map, XP bar, vibration,
+screen size, handheld mode, your own touch layout and controller buttons, and export / import of saved games.
 
-| Settings | Picture choices | Mini-map |
+| Settings | Stats | Mini-map |
 | :---: | :---: | :---: |
-| <img src="docs/settings.png" width="260" alt="Stout Marine settings"> | <img src="docs/settings_picture.png" width="260" alt="Picture setting"> | <img src="docs/minimap.png" width="200" alt="Mini-map"> |
-|  |  | top-right corner while you play: where you have been, walls, doors (yellow) and you (arrow) |
+| <img src="docs/settings.png" width="260" alt="Stout Marine settings"> | <img src="docs/stats.png" width="260" alt="Stats"> | <img src="docs/minimap.png" width="200" alt="Mini-map"> |
+| tap a row, or d-pad + A on a controller | the same numbers as the game's own Status screen | top-right corner while you play: where you have been, walls, doors (yellow) and you (arrow) |
+
+**Save now** saves in one tap through the game's own menu and its Save Game, exactly as if you had done it
+yourself. **Stats** reads the numbers from the emulated phone's memory without changing anything. On first
+start a short tour points out the touch buttons.
+
+### XP bar
+
+A Diablo-style XP bar (number 10 in the first picture): your level in the red circle, a gold bar that fills
+as you earn XP, and the numbers, for example "53 / 80 XP, 27 TO LEVEL 2". They are the game's own numbers,
+read from the emulated phone's memory without changing anything. In landscape it sits in the right panel,
+on handhelds at the top of the left panel. It can be turned off in the settings.
+
+The extras (XP bar, mini-map in the corner, Smart HQ picture, large screen and strong vibration) start on,
+and a window on first start lists them and shows where to change them.
+
+<img src="docs/extras.png" width="260" alt="The extras window">
+
+### Your own layout and buttons
+
+**Edit touch controls** (settings): drag the cross, the fire button and the other groups of buttons where your
+thumbs like them, make the cross or fire button bigger or smaller, or **swap left / right** for left-handed
+play. Portrait and landscape are kept separately, and **Reset to default** puts everything back.
+
+**Controller buttons** (settings): choose an action, then press the button you want for it (if another action
+had that button, the two swap). Start always opens the settings, so you can't lock yourself out. The button
+guide in handheld mode and the hints in every window show the buttons you chose.
+
+| Edit touch controls | Controller buttons |
+| :---: | :---: |
+| <img src="docs/touch_editor.png" width="260" alt="Editing the touch controls"> | <img src="docs/controller_buttons.png" width="260" alt="Controller buttons"> |
+| after "swap left / right", with the fire button at 120 % | the defaults; choose a row, then press a button |
 
 ### Weapon picker
 
@@ -75,11 +107,11 @@ You can also swipe on the game picture (up/down to step, left/right to turn) and
 Tap the words in the game's bottom bar to press the soft keys. Tap the gear for settings and help.
 Gamepads and keyboards work too (Backspace is the phone's CLR key).
 
-Settings: help, about (credits and licences), picture (sharp pixels, smooth, smart upscale (hq) or
-xBR upscale), mini-map (a small see-through map in the corner; off by default), vibration (this app
-only), screen size
-(large 240 x 320, the default, or classic 176 x 208), handheld mode, export / import saved games, quit,
-and reinstall the game file. "What's new" is shown once after an update, and leaving the game with
+Settings: help, about (credits and licences), save now, stats, picture (sharp pixels, smooth, smart HQ or
+xBR, with previews; Smart HQ by default), mini-map (off, corner or big; corner by default), XP bar (on by
+default), vibration (off, light or strong; strong by default; this app only), screen (large 240 x 320,
+the default, or classic 176 x 208), handheld mode, edit touch controls, controller buttons, export / import
+saves, new game file and quit. "What's new" is shown once after an update, and leaving the game with
 Home or Recents shows a short reminder to save first (Android may close apps waiting in the background).
 See `CHANGES.md` for the version history.
 
@@ -88,7 +120,8 @@ See `CHANGES.md` for the version history.
 When a built-in or attached game controller is found on a landscape or square screen, the touch deck
 is replaced by the game picture at the largest whole-number scale (sharp pixels), with small side
 panels: gear (settings), menu, map, keypad and wait buttons on the left, and a button guide on the right (or the
-keypad, when opened). The setting "Handheld mode" can be Auto (the default), On or Off.
+keypad, when opened). The setting "Handheld" can be Auto (the default), Always or Off.
+These are the default buttons; they can be changed in the settings (Controller buttons), except Start.
 
 | Button | Action |
 | --- | --- |

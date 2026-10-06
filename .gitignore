@@ -7,3 +7,4 @@ build/
 *.mod
 *.bar
 doomrpg*.zip
+__pycache__/

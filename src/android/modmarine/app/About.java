@@ -28,11 +28,18 @@ final class About {
 
     /** Shown once after an update (keep in step with CHANGES.md). */
     static final String WHATS_NEW =
-          "\u2022 New: weapon picker. Tap the weapon in the middle of the weapon slot (or hold L2 / R2 on a controller) "
-        + "to see all your weapons with their ammo, then tap one to switch to it.\n\n"
-        + "\u2022 The weapon slot shows the weapon in hand, and small icons by its arrows show what they switch to.\n\n"
-        + "\u2022 From 1.9: mini-map (in settings), a settings button (the gear; Start on a controller), and the "
-        + "number keys open by themselves when the game asks for a door code.";
+          "\u2022 New: move the touch controls. Settings, Edit touch controls: drag the cross, the fire button and the other "
+        + "buttons where you like them, make the cross or fire button bigger or smaller, or swap left / right for "
+        + "left-handed play. Reset to default puts everything back.\n\n"
+        + "\u2022 New: controller buttons. Settings, Controller buttons: choose an action, then press the button you want "
+        + "for it. Start always opens the settings.\n\n"
+        + "\u2022 From 2.1: the XP bar, and the extras start on.";
+
+    /** The same, short enough for the pixel window (capitals only, no bullets). */
+    static final String WHATS_NEW_SHORT =
+          "- EDIT TOUCH CONTROLS: MOVE AND RESIZE THE BUTTONS, OR SWAP LEFT / RIGHT.\n"
+        + "- CONTROLLER BUTTONS: PUT ANY ACTION ON ANY BUTTON.\n\n"
+        + "BOTH ARE IN THE SETTINGS (THE GEAR, OR HOLD THE MENU BUTTON).";
 
     static void showWhatsNew(Activity a) {
         new AlertDialog.Builder(a, android.R.style.Theme_DeviceDefault_Dialog_Alert)

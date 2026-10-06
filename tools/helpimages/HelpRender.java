@@ -6,11 +6,12 @@ public class HelpRender {
     static void out(int w, int h, float dp, boolean keypad, boolean pulse, String name, int mode) throws Exception {
         Deck d = new Deck(dp, mode == Deck.MODE_TOUCH ? 176 : 240, mode == Deck.MODE_TOUCH ? 208 : 320); d.mode = mode; d.keypadOn = keypad; d.layout(w, h); d.keypadOn = keypad; d.pulse = pulse;
         d.wpnCur = 2; d.wpnPrev = 1; d.wpnNext = 3;   // an example: pistol in hand, extinguisher / shotgun beside the arrows
+        d.xpLevel = 1; d.xp = 53; d.xpNext = 80;      // and the XP bar: level 1, 53 of 80 XP
         d.render();
         BufferedImage a = new BufferedImage(d.artW, d.artH, BufferedImage.TYPE_INT_ARGB);
         a.setRGB(0, 0, d.artW, d.artH, d.art.px, 0, d.artW);
         ImageIO.write(a, "png", new File(name + "_art.png"));
-        StringBuilder sb = new StringBuilder("{\"artPx\":" + d.artPx + ",\"game\":[" + d.game[0] + "," + d.game[1] + "," + d.game[2] + "," + d.game[3] + "],\"buttons\":[");
+        StringBuilder sb = new StringBuilder("{\"xp\":[" + d.xpX0 * d.artPx + "," + d.xpY0 * d.artPx + "," + (d.xpX1 + 1) * d.artPx + "," + (d.xpY0 + d.xpInner + 4) * d.artPx + "],\"artPx\":" + d.artPx + ",\"game\":[" + d.game[0] + "," + d.game[1] + "," + d.game[2] + "," + d.game[3] + "],\"buttons\":[");
         boolean first = true;
         for (Deck.Btn b : d.buttons) {
             if (!first) sb.append(","); first = false;

@@ -128,6 +128,21 @@ final class Icons {
         {"######.", "#######", "######."},
         PAW_S, PAW_S, PAW_S,
     };
+    // settings menu icons
+    static final String[] I_HELP = {".###.", "#...#", "...#.", "..#..", ".....", "..#.."};
+    static final String[] I_INFO = {"..#..", ".....", ".##..", "..#..", "..#..", ".###."};
+    static final String[] I_SAVE = {"######.", "#....##", "#....##", "#.###.#", "#.###.#", "#######"};
+    static final String[] I_STATS = {"......#", "....#.#", "..#.#.#", "#.#.#.#", "#.#.#.#", "#######"};
+    static final String[] I_MOVE = {"..#..", ".###.", "#.#.#", "#####", "#.#.#", ".###.", "..#.."};
+    static final String[] I_XP = {"#######", "#.....#", "#.###.#", "#.....#", "#######"};
+    static final String[] I_PIC = {"#######", "#.....#", "#..#..#", "#.###.#", "#######"};
+    static final String[] I_VIB = {"#.###.#", "#.#.#.#", ".#####.", "#.#.#.#", "#.###.#"};
+    static final String[] I_SCR = {"#####", "#...#", "#...#", "#####", "..#..", ".###."};
+    static final String[] I_PAD = {".#####.", "##.#.##", "#.###.#", "##.#.##", ".#####."};
+    static final String[] I_UP = {"..#..", ".###.", "#.#.#", "..#..", "#####"};
+    static final String[] I_DOWN = {"..#..", "#.#.#", ".###.", "..#..", "#####"};
+    static final String[] I_QUIT = {"..#..", "#.#.#", "#.#.#", "#...#", ".###."};
+    static final String[] I_REDO = {".###.#", "#...##", "#..###", "#.....", ".####."};
     static final String[] X = {"#...#", ".#.#.", "..#..", ".#.#.", "#...#"};
     static final String[] CHEV_L = {"..#", ".#.", "#..", ".#.", "..#"};
     static final String[] CHEV_R = {"#..", ".#.", "..#", ".#.", "#.."};
@@ -188,6 +203,17 @@ final class Icons {
             case '9': return new String[]{"###", "#.#", "###", "..#", "###"};
             case '*': return new String[]{"...", "#.#", ".#.", "#.#", "..."};
             case '#': return new String[]{".#.#.", "#####", ".#.#.", "#####", ".#.#."};
+            case '.': return new String[]{".", ".", ".", ".", "#"};
+            case ',': return new String[]{"..", "..", "..", ".#", "#."};
+            case '-': return new String[]{"...", "...", "###", "...", "..."};
+            case '!': return new String[]{"#", "#", "#", ".", "#"};
+            case '?': return new String[]{"##.", "..#", ".#.", "...", ".#."};
+            case '(': return new String[]{".#", "#.", "#.", "#.", ".#"};
+            case ')': return new String[]{"#.", ".#", ".#", ".#", "#."};
+            case '\'': return new String[]{"#", "#", ".", ".", "."};
+            case '%': return new String[]{"#.#", "..#", ".#.", "#..", "#.#"};
+            case '>': return new String[]{"#..", ".#.", "..#", ".#.", "#.."};
+            case '<': return new String[]{"..#", ".#.", "#..", ".#.", "..#"};
             default: return SPACE;
         }
     }

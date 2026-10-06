@@ -1,5 +1,41 @@
 # Changes
 
+## 2.2
+- Edit touch controls (settings): drag groups of buttons (the cross, the fire button, L / R, the top row; in
+  landscape also the wait button and the weapon slot) to new places on the control area, and make the cross or
+  the fire button 80 to 140 % of their size. Swap left / right mirrors the layout for left-handed play. Portrait
+  and landscape are kept separately; Reset to default puts them back. Buttons can't overlap each other, the XP
+  bar or the game picture: a drop with no room goes to the nearest free place. A saved layout that doesn't fit
+  another screen falls back to the default for the buttons concerned.
+- Controller buttons (settings): choose an action (fire, game menu, wait, map, step left / right, previous /
+  next weapon, keypad), then press the button for it; if another action had that button, the two swap. The
+  button guide, the big keypad and the windows' hints show the buttons you chose. Start always opens the
+  settings and the d-pad and sticks always move, so nobody can lock themselves out. Reset to default.
+
+## 2.1
+- XP bar (Diablo style), on by default: your level in a round socket, a gold bar with ten segments, the XP you
+  have in this level, the XP the level needs, and how much is left until the next level. The numbers are the
+  game's own, read from the emulated phone's memory without changing anything (the game keeps XP per level,
+  so the bar fills from empty to the next level). Portrait: a strip right under the game picture. Landscape:
+  the right panel, under R. Handheld: the top of the left panel. Settings, XP bar: on / off.
+- The extras now start on for new players: XP bar, mini-map in the corner, Smart HQ picture, large screen
+  (240 x 320) and strong vibration. Settings you changed yourself are kept.
+- First start: a "Stout Marine extras" window lists them as they are set and says where to change them
+  (the gear, holding the menu button, or Start), with a button that opens the settings.
+
+## 2.0
+- Settings, questions and notes are drawn in the same pixel style as the controls and the weapon picker,
+  and work with touch or a controller (d-pad moves, left / right change a value, A chooses, B goes back).
+- Save now (settings): saves in one tap. It opens the game's own menu and chooses Save Game, exactly as if
+  you did it yourself, and a note says when it's saved (or that it can't save right now, e.g. in a fight).
+- Stats (settings): health, armor, level, XP, credits, and for this sector and overall the time, monsters
+  killed, secrets found, moves and deaths. Read from the emulated phone's memory; the same numbers as the
+  game's own Status screen.
+- Picture: tapping it shows a small preview of each choice, made from the current game picture.
+- Mini-map: Off, Corner or Big (a larger map showing more of the area).
+- Vibration: Off, Light or Strong.
+- First start: a short tour of the touch buttons (tap to go on, or skip).
+
 ## 1.10
 - Weapon picker: tap the weapon in the middle of the weapon slot (or hold L2 / R2 on a controller) to see all
   your weapons with their ammo, and tap one (or d-pad + A) to switch to it. The pictures are the game's own

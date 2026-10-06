@@ -60,6 +60,8 @@ def help_controls():
         (8, at(wait, 0, 100)),
         (9, at(fire, 96, -110)),
     ] + [(7, (b["x0"] + 36 if b["key"] == 49 else b["x1"] - 36, b["y1"] - top + 32)) for b in sl]
+    if j.get("xp") and j["xp"][0] >= 0:
+        marks.append((10, (j["xp"][2] - 52, (j["xp"][1] + j["xp"][3]) / 2 - top)))
     for n, (x, y) in marks:
         badge(d, x, y, n)
     return im

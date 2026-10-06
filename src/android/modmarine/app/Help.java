@@ -26,7 +26,10 @@ final class Help {
         + "Hold to keep going, or slide your thumb to another direction.<br>"
         + "<b>7 L / R</b> &mdash; side-step left / right. Hold to keep going.<br>"
         + "<b>8 Hourglass</b> &mdash; wait: skip a turn.<br>"
-        + "<b>9 Red crosshair</b> &mdash; fire / use: attack, open doors, talk, pick things up, select in menus.",
+        + "<b>9 Red crosshair</b> &mdash; fire / use: attack, open doors, talk, pick things up, select in menus.<br>"
+        + "<b>10 XP bar</b> &mdash; your level (in the red circle), the XP you have in this level, the XP the level needs, "
+        + "and how much is left until the next level. The numbers are the game's own (read from the game, nothing is changed). "
+        + "Turn it off in the settings if you like the original look.",
 
         "<h4>Turn or side-step?</h4>",
         "img:help_moves",
@@ -52,26 +55,38 @@ final class Help {
         + "even if you turn the phone. To get your controls back, tap the glowing button or <b>X CLOSE</b>.",
 
         "<h4>Settings (the gear button)</h4>"
-        + "<b>Picture</b> &mdash; <i>Sharp pixels</i> (the original look, the default), <i>Smooth</i> (soft and blended), "
-        + "<i>Smart upscale (hq)</i> (smoother edges that keep the pixel look) or <i>xBR upscale</i> (rounder, more like a drawing). "
-        + "Only the picture changes, not the game.<br>"
-        + "<b>Mini-map</b> &mdash; a small, see-through map in the top-right corner while you play (off by default). "
+        + "Tap a row to use it; on rows with a value, tap again (or press left / right on a controller) to change it. "
+        + "Tap outside the window, or press <b>B</b>, to close.<br>"
+        + "<b>Save now</b> &mdash; saves your game in one tap. It uses the game's own menu and its <b>Save Game</b>, "
+        + "exactly as if you had done it yourself, so it only works while you are walking around (not in a fight, "
+        + "a conversation or a menu). A note at the top says when it's saved.<br>"
+        + "<b>Stats</b> &mdash; your health, armor, level and XP, and for this sector and overall: time played, "
+        + "monsters killed, secrets found and moves. The numbers are the same as the game's own Status screen.<br>"
+        + "<b>Picture</b> &mdash; <i>Sharp pixels</i> (the original look), <i>Smooth</i> (soft and blended), "
+        + "<i>Smart HQ</i> (smoother edges that keep the pixel look; the default) or <i>xBR</i> (rounder, more like a drawing). "
+        + "Tap Picture for a small preview of each. Only the picture changes, not the game.<br>"
+        + "<b>Mini-map</b> &mdash; <i>Off</i>, <i>Corner</i> (a small, see-through map in the top-right corner "
+        + "while you play; the default) or <i>Big</i> (a larger one, more of the area). "
         + "It shows only what the game's own map shows: the places you have been, doors and the monsters there.<br>"
-        + "<b>Vibration</b> &mdash; turns the game's rumble and the button-tap buzz on or off for this app only. "
+        + "<b>XP bar</b> &mdash; on (the default) or off.<br>"
+        + "<b>Vibration</b> &mdash; <i>Off</i>, <i>Light</i> or <i>Strong</i> (the default), for the game's rumble and the button-tap buzz "
+        + "in this app. Choosing a level gives a short sample buzz. "
         + "The game has its own switch too: <b>Vibrate</b> in the game's <b>Options</b> menu. "
         + "Stout Marine turns it on once when the game is first set up; after that your choice there is kept.<br>"
-        + "<b>Screen size</b> &mdash; <i>large</i> tells the game it runs on a 240 x 320 phone and gives the biggest view "
+        + "<b>Screen</b> &mdash; <i>Large</i> tells the game it runs on a 240 x 320 phone and gives the biggest view "
         + "(the default). <i>Classic</i> tells it 176 x 208, the smaller size, which is faster on older phones.<br>"
-        + "<b>Export / Import saved games</b> &mdash; save your progress to a .zip, or load it on another phone.<br>"
-        + "<b>Quit Stout Marine</b> &mdash; closes the app. Save in the game first (menu, then Save Game).<br>"
-        + "<b>Reinstall game file</b> &mdash; pick the game's .zip again if the wrong file was chosen. Your saves are kept.",
+        + "<b>Handheld</b> &mdash; <i>Auto</i> (the default), <i>Always</i> or <i>Off</i> (see below).<br>"
+        + "<b>Export / Import saves</b> &mdash; save your progress to a .zip, or load it on another phone.<br>"
+        + "<b>New game file</b> &mdash; pick the game's .zip again if the wrong file was chosen. Your saves are kept.<br>"
+        + "<b>Quit</b> &mdash; closes the app. Save first (Save now, or the game's menu, then Save Game).",
 
         "<h4>Handheld mode (RG Rotate, AYN Thor and other gaming handhelds)</h4>",
         "img:help_handheld",
         "When a game controller is built in or connected, the touch controls make way for the game, shown as large "
         + "as possible with sharp, even pixels. Beside it: the gear (settings), menu, map, number "
         + "keypad and wait buttons, and a guide to the physical buttons. <b>Start</b> opens the settings too.<br>"
-        + "Settings: <b>Handheld mode</b> &mdash; automatic (the default), always or off.",
+        + "Settings: <b>Handheld</b> &mdash; Auto (the default), Always or Off. In the settings, the d-pad moves, "
+        + "left / right change a value, <b>A</b> chooses and <b>B</b> goes back.",
 
         "<h4>Door codes on a handheld</h4>",
         "img:help_bigkeypad",
@@ -90,7 +105,16 @@ final class Help {
         + "<b>Select</b>, <b>K</b> &mdash; open / close the number keys.<br>"
         + "<b>L2 / R2</b>, <b>Q / E</b> &mdash; previous / next weapon. <b>Hold L2 or R2</b>: the weapon picker.<br>"
         + "<b>X button</b> &mdash; wait. Number keys type door codes. <b>Backspace</b> &mdash; the phone's CLR key.<br>"
-        + "The on-screen controls hide while you use a controller and come back when you touch the screen.",
+        + "The on-screen controls hide while you use a controller and come back when you touch the screen.<br>"
+        + "These are the default buttons. To change them: settings, <b>Controller buttons</b>. Choose an action, then press "
+        + "the button you want for it (if another action had that button, the two swap). <b>Start</b> always opens the settings "
+        + "and the d-pad and stick always move, so you can't lock yourself out. <b>Reset to default</b> puts them back.",
+
+        "<h4>Move the touch controls</h4>"
+        + "Settings, <b>Edit touch controls</b>: drag a group of buttons (the cross, the fire button, the L / R buttons, "
+        + "the top row) to where your thumbs like them. Tap the cross or the fire button, then change its size (80 to 140%). "
+        + "<b>Swap left / right</b> mirrors everything, for left-handed play. Portrait and landscape are kept separately. "
+        + "<b>Reset to default</b> puts everything back. Buttons can't overlap or go onto the game picture.",
     };
 
     @SuppressWarnings("deprecation")

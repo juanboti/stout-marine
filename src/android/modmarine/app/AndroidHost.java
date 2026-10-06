@@ -49,15 +49,17 @@ final class AndroidHost implements Host {
             boolean pw = DoomMap.state(b) == DoomMap.ST_PASSWORD;
             if (pw != codePrompt) { codePrompt = pw; v.codePrompt(pw); }
             updateWeapons(v, b);
+            updateXp(v, b);
         }
-        if (miniMap) updateMiniMap(v, w);
+        if (miniMap != Prefs.MAP_OFF) updateMiniMap(v, w);
         else if (mapShown) { mapShown = false; v.submitMap(null, 0); }
     }
 
     // ---------------------------------------------------------------- mini-map
     // Read from the game's memory right after each frame, on the emulator thread (so it matches the picture).
     volatile Brew brew;
-    volatile boolean miniMap;
+    /** Prefs.MAP_OFF / MAP_CORNER / MAP_BIG. */
+    volatile int miniMap;
     private final DoomMap map = new DoomMap();
     private int[] mapPx = new int[0];
     private boolean mapShown;
@@ -77,20 +79,66 @@ final class AndroidHost implements Host {
         v.weaponInfo(known ? weapons : null);
     }
 
+    // ---------------------------------------------------------------- XP bar (the last values stay while the game shows menus)
+    private int xLevel, xXp, xNext;
+    private GameView xView;
+
+    private void updateXp(GameView v, Brew b) {
+        if (v != xView) { xView = v; xLevel = 0; }   // a new screen (e.g. after turning the phone): send again
+        int[] x = brewemu.doomrpg.DoomGame.xp(b);
+        if (x == null || (x[0] == xLevel && x[1] == xXp && x[2] == xNext)) return;
+        xLevel = x[0]; xXp = x[1]; xNext = x[2];
+        v.xpInfo(xLevel, xXp, xNext);
+    }
+
     /** From the picker (emulator thread, between the game's frames). */
     void selectWeapon(Brew b, int w) { weapons.select(b, w); }
 
-    /** Moves a weapon switch along (emulator thread, between the game's frames: never from inside game code). */
-    void tickWeapons(Brew b) { if (weapons.switching()) weapons.tick(b); }
+    /** Moves a weapon switch or a save along (emulator thread, between the game's frames: never from inside game code). */
+    void tickWeapons(Brew b) {
+        if (weapons.switching()) weapons.tick(b);
+        if (game.saving()) {
+            int r = game.tick(b);
+            if (r != brewemu.doomrpg.DoomGame.SAVE_BUSY) {
+                // the game writes its save files when it saves: check that it did
+                boolean wrote = new File(dataDir, "Player2").lastModified() > saveStarted || new File(dataDir, "World").lastModified() > saveStarted;
+                final String msg = r == brewemu.doomrpg.DoomGame.SAVE_DONE && wrote ? "Game saved." : "Couldn't save right now. Try again while walking around.";
+                final GameView v = view;
+                if (v != null) v.post(new Runnable() { public void run() { v.toast(msg); } });
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------- save now, stats (emulator thread)
+    private final brewemu.doomrpg.DoomGame game = new brewemu.doomrpg.DoomGame();
+    private long saveStarted;
+
+    void saveNow(Brew b) {
+        saveStarted = System.currentTimeMillis() - 1000;
+        if (!game.startSave(b)) {
+            final GameView v = view;
+            if (v != null) v.post(new Runnable() { public void run() { v.toast("You can save while playing (not in menus or fights)."); } });
+        }
+    }
+
+    /** Reads the stats and hands them to the UI thread (null when not playing). */
+    void readStats(Brew b, final StatsCallback cb) {
+        final brewemu.doomrpg.DoomGame.Stats s = brewemu.doomrpg.DoomGame.stats(b, b.clock.uptimeMs());
+        final GameView v = view;
+        if (v != null) v.post(new Runnable() { public void run() { cb.stats(s); } });
+    }
+
+    interface StatsCallback { void stats(brewemu.doomrpg.DoomGame.Stats s); }
     private boolean codePrompt;
 
     private void updateMiniMap(GameView v, int gameW) {
         Brew b = brew;
         if (b != null && map.read(b)) {
-            int tiles = gameW >= 240 ? 15 : 13, cell = gameW >= 240 ? 5 : 4, size = tiles * cell;
+            boolean big = miniMap == Prefs.MAP_BIG;
+            int tiles = gameW >= 240 ? (big ? 19 : 15) : (big ? 17 : 13), cell = gameW >= 240 ? (big ? 6 : 5) : (big ? 5 : 4), size = tiles * cell;
             if (mapPx.length != size * size) mapPx = new int[size * size];
             map.drawAround(mapPx, size, cell, 0x99000000);
-            v.submitMap(mapPx, size);
+            v.submitMap(mapPx, size, big);
             mapShown = true;
         } else if (mapShown) {
             mapShown = false;
@@ -104,7 +152,9 @@ final class AndroidHost implements Host {
     private android.media.AudioAttributes gameAttrs;
 
     /** Android 8+: one-shot vibration marked as game feedback (looked up at run time; built against API 23). */
-    private boolean vibrateEffect(int ms) {
+    private boolean vibrateEffect(int ms) { return vibrateEffect(ms, -1); }
+
+    private boolean vibrateEffect(int ms, int amplitude) {
         try {
             if (createOneShot == null) {
                 Class<?> ve = Class.forName("android.os.VibrationEffect");
@@ -114,7 +164,7 @@ final class AndroidHost implements Host {
                         .setUsage(android.media.AudioAttributes.USAGE_GAME)
                         .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION).build();
             }
-            Object effect = createOneShot.invoke(null, (long) ms, -1);   // -1 = VibrationEffect.DEFAULT_AMPLITUDE
+            Object effect = createOneShot.invoke(null, (long) ms, amplitude);   // -1 = VibrationEffect.DEFAULT_AMPLITUDE
             vibrateWithEffect.invoke(vib, effect, gameAttrs);
             return true;
         } catch (Throwable t) {
@@ -128,7 +178,15 @@ final class AndroidHost implements Host {
         if (vib == null) return;
         try {
             if (ms <= 0) { vib.cancel(); return; }
-            if (!Prefs.vibrate(app) || !vib.hasVibrator()) return;
+            int level = Prefs.vibration(app);
+            if (level == Prefs.VIB_OFF || !vib.hasVibrator()) return;
+            if (level == Prefs.VIB_LIGHT) {
+                // light: shorter and, where the phone can, gentler
+                int m = Math.max(15, ms * 6 / 10);
+                if (android.os.Build.VERSION.SDK_INT >= 26 && vibrateEffect(m, 70)) return;
+                vib.vibrate(Math.max(15, ms * 4 / 10));
+                return;
+            }
             if (android.os.Build.VERSION.SDK_INT >= 26 && vibrateEffect(ms)) return;
             vib.vibrate(ms);
         } catch (Throwable t) { /* no vibrator */ }
