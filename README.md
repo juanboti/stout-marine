@@ -63,7 +63,7 @@ and a window on first start lists them and shows where to change them.
 ### Your own layout and buttons
 
 **Edit touch controls** (settings): drag the cross, the fire button and the other groups of buttons where your
-thumbs like them, make the cross or fire button bigger or smaller (tap < or >), or **swap left / right** for left-handed
+thumbs like them, make the cross, the fire button, L, R or the hourglass bigger or smaller (tap < or >), or **swap left / right** for left-handed
 play. Portrait and landscape are kept separately, and **Reset to default** puts everything back.
 
 **Controller buttons** (settings): choose an action, then press the button you want for it (if another action

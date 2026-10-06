@@ -57,7 +57,7 @@ final class Help {
         "<h4>Settings (the gear button)</h4>"
         + "Tap a row to use it. Rows with a value show <b>&lt; value &gt;</b>: tap the left arrow for the previous choice and "
         + "the right arrow for the next (left / right on a controller). "
-        + "Tap outside the window, or press <b>B</b>, to close.<br>"
+        + "Tap outside the window, or press <b>B</b>, to close. On smaller screens the list scrolls: drag it, or move with the d-pad.<br>"
         + "<b>Save now</b> &mdash; saves your game in one tap. It uses the game's own menu and its <b>Save Game</b>, "
         + "exactly as if you had done it yourself, so it only works while you are walking around (not in a fight, "
         + "a conversation or a menu). A note at the top says when it's saved.<br>"
@@ -112,8 +112,9 @@ final class Help {
         + "and the d-pad and stick always move, so you can't lock yourself out. <b>Reset to default</b> puts them back.",
 
         "<h4>Move the touch controls</h4>"
-        + "Settings, <b>Edit touch controls</b>: drag a group of buttons (the cross, the fire button, the L / R buttons, "
-        + "the top row) to where your thumbs like them. Tap the cross or the fire button, then change its size (80 to 140%): "
+        + "Settings, <b>Edit touch controls</b>: drag a group of buttons (the cross, the fire button, L, R, the hourglass, "
+        + "the top row) to where your thumbs like them. Tap the cross or the fire button, then change its size (80 to 140%; "
+        + "L, R and the hourglass 80 to 120%, and smaller ones leave room for a bigger cross): "
         + "tap <b>&lt;</b> for smaller or <b>&gt;</b> for bigger, or tap the size row itself to go up a step at a time to the "
         + "biggest size that fits, then back down. "
         + "<b>Swap left / right</b> mirrors everything, for left-handed play. Portrait and landscape are kept separately. "

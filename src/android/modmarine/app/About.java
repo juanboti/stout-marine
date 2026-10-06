@@ -28,16 +28,15 @@ final class About {
 
     /** Shown once after an update (keep in step with CHANGES.md). */
     static final String WHATS_NEW =
-          "\u2022 Fixed: the cross (and the fire button) can be made smaller again. In Edit touch controls, tap < for "
-        + "smaller and > for bigger, or tap the size to go up and back down. Rows with a value in the settings have "
-        + "both arrows too.\n\n"
-        + "\u2022 From 2.2: edit touch controls (move, resize, swap left / right) and controller buttons.";
+          "\u2022 Edit touch controls, portrait: L, the hourglass and R now move on their own and can be made 80 to "
+        + "120 % of their size. Smaller ones leave room for a bigger cross.\n\n"
+        + "\u2022 Settings and the other windows are sized to your screen, so they can be read on small handheld "
+        + "screens too. A long window scrolls: drag it, or move with the d-pad.";
 
     /** The same, short enough for the pixel window (capitals only, no bullets). */
     static final String WHATS_NEW_SHORT =
-          "- FIXED: THE CROSS CAN BE MADE SMALLER AGAIN. TAP < FOR SMALLER, > FOR BIGGER.\n"
-        + "- SETTINGS ROWS WITH A VALUE HAVE BOTH ARROWS.\n\n"
-        + "FROM 2.2: EDIT TOUCH CONTROLS AND CONTROLLER BUTTONS (IN THE SETTINGS).";
+          "- EDIT TOUCH CONTROLS: L, WAIT AND R MOVE ON THEIR OWN AND CAN BE RESIZED.\n"
+        + "- WINDOWS ARE SIZED TO YOUR SCREEN. A LONG WINDOW SCROLLS.";
 
     static void showWhatsNew(Activity a) {
         new AlertDialog.Builder(a, android.R.style.Theme_DeviceDefault_Dialog_Alert)

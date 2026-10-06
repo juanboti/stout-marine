@@ -259,16 +259,20 @@ final class Deck {
         switch (b.kind) {
             case CELL: return "cross";
             case FIRE: return "fire";
-            case SHOULDER: return portrait ? "steps" : (b.key == K_STRAFE_L ? "stepl" : "stepr");
+            case SHOULDER: return b.key == K_STRAFE_L ? "stepl" : "stepr";
             case SLOT: return portrait ? "top" : "topr";
             case DISC:
-                if (b.key == K_WAIT) return portrait ? "steps" : "wait";
+                if (b.key == K_WAIT) return "wait";
                 return portrait ? "top" : (b.key == K_MAP ? "topr" : "topl");   // by button, not by place (they can move)
         }
         return "other";
     }
 
     static final int SIZE_MIN = 80, SIZE_MAX = 140;
+
+    /** Groups that can change size, and how big they may get (L, R and wait: up to 120 %). */
+    static boolean sizable(String id) { return id.equals("cross") || id.equals("fire") || id.equals("stepl") || id.equals("stepr") || id.equals("wait"); }
+    static int sizeMax(String id) { return id.equals("cross") || id.equals("fire") ? SIZE_MAX : 120; }
 
     /** Saved form of a layout's changes: "id:dx:dy:size;..." */
     static String saveEdits(HashMap<String, int[]> ed) {
@@ -293,6 +297,8 @@ final class Deck {
     private void applyEdits(boolean portrait) {
         editable = true; portraitLayout = portrait;
         HashMap<String, int[]> ed = edits(portrait);
+        int[] steps = ed.remove("steps");   // 2.2 moved L, wait and R together in portrait: now three groups
+        if (steps != null) for (String id : new String[]{"stepl", "wait", "stepr"}) if (!ed.containsKey(id)) ed.put(id, new int[]{steps[0], steps[1], 100});
         // where groups may go: the panels (below the XP bar), and always where they are by default
         regions.clear(); obstacles.clear();
         int xpBottom = xpX0 >= 0 ? xpY0 + xpInner + 3 + (xpTextLines > 0 && xpTextRight ? 12 : 0) : -1;
@@ -310,11 +316,10 @@ final class Deck {
                 if (cx >= r[0] && cx <= r[2] && cy >= r[1] && cy <= r[3]) { r[0] = Math.min(r[0], g.x0); r[1] = Math.min(r[1], g.y0); r[2] = Math.max(r[2], g.x1); r[3] = Math.max(r[3], g.y1); }
         }
         // move / resize
-        int cellsAt = -1;
         for (String id : ed.keySet()) {
             if (disabled.contains(id)) continue;
             int[] e = ed.get(id);
-            int dx = e[0], dy = e[1], size = Math.max(SIZE_MIN, Math.min(SIZE_MAX, e[2]));
+            int dx = e[0], dy = e[1], size = sizable(id) ? Math.max(SIZE_MIN, Math.min(sizeMax(id), e[2])) : 100;
             if (id.equals("cross")) {
                 int cell = Math.max(10, Math.min(28, Math.round(crossCell * size / 100f))), cx = crossCx + dx, cy = crossCy + dy;
                 for (int i = buttons.size() - 1; i >= 0; i--) if (buttons.get(i).kind == CELL) buttons.remove(i);
@@ -327,6 +332,12 @@ final class Deck {
                 if (b.kind == DISC || b.kind == FIRE) {
                     b.cx += dx; b.cy += dy;
                     if (b.kind == FIRE) b.r = Math.max(10, Math.min(26, Math.round(17 * size / 100f)));
+                    else if (b.key == K_WAIT && size != 100) b.r = Math.max(5, Math.min(14, Math.round(b.r * size / 100f)));
+                } else if (b.kind == SHOULDER && size != 100) {
+                    // L / R: taller or shorter; narrower when smaller (they are wide already)
+                    int cx = (b.x0 + b.x1) / 2 + dx, cy = (b.y0 + b.y1) / 2 + dy;
+                    int w = Math.round((b.x1 - b.x0 + 1) * Math.min(1f, size / 100f)), h = Math.max(8, Math.round((b.y1 - b.y0 + 1) * size / 100f));
+                    b.x0 = cx - w / 2; b.x1 = b.x0 + w - 1; b.y0 = cy - h / 2; b.y1 = b.y0 + h - 1;
                 } else { b.x0 += dx; b.x1 += dx; b.y0 += dy; b.y1 += dy; slot |= b.kind == SLOT; }
             }
             if (slot) { slotCx += dx; slotCy += dy; }
@@ -343,7 +354,7 @@ final class Deck {
             String id = groupOf(b, portrait);
             Group g = null;
             for (Group q : groups) if (q.id.equals(id)) g = q;
-            if (g == null) { g = new Group(); g.id = id; g.sizable = id.equals("cross") || id.equals("fire"); g.edited = ed.containsKey(id) && !disabled.contains(id); groups.add(g); }
+            if (g == null) { g = new Group(); g.id = id; g.sizable = sizable(id); g.edited = ed.containsKey(id) && !disabled.contains(id); groups.add(g); }
             switch (b.kind) {
                 case CELL: if (!wellDone) { g.add(clusterWell[0] + 2, clusterWell[1] + 2, clusterWell[2] - 2, clusterWell[3] - 2); wellDone = true; } break;
                 case DISC: case FIRE: g.add(b.cx - b.r, b.cy - b.r, b.cx + b.r, b.cy + b.r + 1); break;
@@ -409,9 +420,13 @@ final class Deck {
             public int compare(Group a, Group b) { return (b.x1 - b.x0) * (b.y1 - b.y0) - (a.x1 - a.x0) * (a.y1 - a.y0); }
         });
         HashMap<String, int[]> want = new HashMap<String, int[]>();
+        Group gl = group("stepl"), gr = group("stepr");
         for (Group g : order) {
             int[] e = ed.containsKey(g.id) ? ed.get(g.id).clone() : new int[]{0, 0, 100};
-            e[0] += axis2 - (g.x0 + g.x1);   // new centre = 2 axis - centre
+            // L and R swap places with each other's mirror image, so L stays on the left and R on the right
+            Group from = gl != null && gr != null ? (g == gl ? gr : g == gr ? gl : g) : g;
+            e[0] += (2 * axis2 - (from.x0 + from.x1) - (g.x0 + g.x1)) / 2;   // new centre = 2 axis - centre (of "from")
+            e[1] += (from.y0 + from.y1) / 2 - (g.y0 + g.y1) / 2;
             want.put(g.id, e);
         }
         int stuck = 0;

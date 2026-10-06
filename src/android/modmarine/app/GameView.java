@@ -237,13 +237,13 @@ final class GameView extends View {
     /** Changes a group's size; a size with no room (or out of range) is not kept. Returns true if it changed. */
     private boolean resize(String id, int size, boolean tell) {
         boolean ok = false;
-        if (size >= Deck.SIZE_MIN && size <= Deck.SIZE_MAX) {
+        if (size >= Deck.SIZE_MIN && size <= Deck.sizeMax(id)) {
             int[] old = curEdits().get(id);
             int[] e = old != null ? old.clone() : new int[]{0, 0, 100};
             e[2] = size;
             ok = deck.placeNear(getWidth(), getHeight(), id, e, 8);
         }
-        if (!ok && tell) toast(size > Deck.SIZE_MAX ? "That's the biggest size." : size < Deck.SIZE_MIN ? "That's the smallest size." : "No room for that size here.");
+        if (!ok && tell) toast(size > Deck.sizeMax(id) ? "That's the biggest size." : size < Deck.SIZE_MIN ? "That's the smallest size." : "No room for that size here.");
         relayout(); saveEdits(); fillEditMenu();
         return ok;
     }
@@ -475,6 +475,7 @@ final class GameView extends View {
         if (deck.keypadOn) setKeypad(false);
         releaseTouches();
         menuController = controller;
+        menuFollow = true;
         if (m.cursor < 0) m.firstSelectable();
         menus.add(m);
         menuDirty = true; invalidate();
@@ -507,7 +508,7 @@ final class GameView extends View {
     /** The top window's rows changed (call after changing its items). */
     void menuChanged() { menuDirty = true; invalidate(); }
 
-    void menuMove(int d) { PixelMenu m = topMenu(); if (m == null) return; menuController = true; m.move(d); haptic(); menuChanged(); }
+    void menuMove(int d) { PixelMenu m = topMenu(); if (m == null) return; menuController = true; menuFollow = true; m.move(d); haptic(); menuChanged(); }
 
     /** A (or a tap): the row's action. */
     void menuActivate() {
@@ -543,43 +544,122 @@ final class GameView extends View {
         if (m.editor) {
             // the editor: over the game picture only, so the whole deck stays free to drag
             c.drawRect(gameRect, dimPaint); c.drawRect(gameRect, dimPaint);
-            s = Math.min(deck.artPx, Math.min(gameRect.width() * 0.98f / menuBmp.getWidth(), gameRect.height() * 0.96f / menuBmp.getHeight()));
-            if (s >= 2) s = (float) Math.floor(s);
+            s = fitScale(gameRect.width() * 0.98f / menuBmp.getWidth(), gameRect.height() * 0.96f / menuBmp.getHeight());
             w = menuBmp.getWidth() * s; h = menuBmp.getHeight() * s;
             x = gameRect.centerX() - w / 2; y = gameRect.centerY() - h / 2;
         } else {
             c.drawRect(0, 0, getWidth(), getHeight(), dimPaint);
-            s = Math.min(deck.artPx, Math.min(getWidth() * 0.96f / menuBmp.getWidth(), getHeight() * 0.96f / menuBmp.getHeight()));
-            if (s >= 2) s = (float) Math.floor(s);
-            w = menuBmp.getWidth() * s; h = menuBmp.getHeight() * s;
+            // sized to the screen: big enough to read on this screen (as wide as fits); a window taller than the
+            // screen shows part of its rows and scrolls (drag, or the controller cursor)
+            int bw = menuBmp.getWidth(), bh = menuBmp.getHeight();
+            s = fitScale(getWidth() * 0.96f / bw, readScale());
+            int avail = (int) (getHeight() * 0.96f / s);
+            menuBodyTop = m.bodyTop(); int end = m.bodyEnd(), foot = bh - end;
+            menuBodyVis = end - menuBodyTop; menuScrollMax = 0;
+            if (bh > avail) {
+                int vis = avail - menuBodyTop - foot;
+                if (vis >= 40) { menuBodyVis = vis; menuScrollMax = end - menuBodyTop - vis; }
+                else { s = fitScale(getWidth() * 0.96f / bw, getHeight() * 0.96f / bh); }   // no room to scroll: all of it, smaller
+            }
+            if (menuFollow && m.cursor >= 0 && m.cursor < m.items.size()) {   // keep the controller's row in view
+                int rt = m.rowTop(m.cursor) - menuBodyTop, rb = rt + m.rowH(m.items.get(m.cursor));
+                if (rt - 3 < m.scroll) m.scroll = rt - 3;
+                if (rb + 3 > m.scroll + menuBodyVis) m.scroll = rb + 3 - menuBodyVis;
+            }
+            m.scroll = Math.max(0, Math.min(menuScrollMax, m.scroll));
+            menuFullH = bh; menuVisH = bh - (end - menuBodyTop - menuBodyVis);
+            w = bw * s; h = menuVisH * s;
             float cy = deck.mode == Deck.MODE_TOUCH && getHeight() > getWidth() ? gameRect.centerY() : getHeight() / 2f;
             x = (getWidth() - w) / 2; y = Math.max(0, Math.min(getHeight() - h, cy - h / 2));
         }
         menuScale = s;
         menuDst.set(x, y, x + w, y + h);
-        c.drawBitmap(menuBmp, null, menuDst, pickerPaint);
+        if (m.editor || menuScrollMax <= 0 && menuVisH == menuFullH) {
+            if (m.editor) { menuScrollMax = 0; menuBodyTop = 0; menuBodyVis = menuBmp.getHeight(); menuFullH = menuVisH = menuBmp.getHeight(); m.scroll = 0; }
+            c.drawBitmap(menuBmp, null, menuDst, pickerPaint);
+        } else {
+            // three pieces: the title and message, the rows (scrolled), the hint at the bottom
+            int top = menuBodyTop, vis = menuBodyVis, foot = menuFullH - (top + vis + menuScrollMax);
+            tmpSrc.set(0, 0, menuBmp.getWidth(), top); tmpDst.set(x, y, x + w, y + top * s);
+            c.drawBitmap(menuBmp, tmpSrc, tmpDst, pickerPaint);
+            tmpSrc.set(0, top + m.scroll, menuBmp.getWidth(), top + m.scroll + vis); tmpDst.set(x, y + top * s, x + w, y + (top + vis) * s);
+            c.drawBitmap(menuBmp, tmpSrc, tmpDst, pickerPaint);
+            tmpSrc.set(0, menuFullH - foot, menuBmp.getWidth(), menuFullH); tmpDst.set(x, y + (top + vis) * s, x + w, y + h);
+            c.drawBitmap(menuBmp, tmpSrc, tmpDst, pickerPaint);
+            // scroll bar on the right edge
+            float bx = x + w - 3 * s, by0 = y + top * s, bh2 = vis * s;
+            float th = Math.max(6 * s, bh2 * vis / (float) (vis + menuScrollMax)), ty = by0 + (bh2 - th) * m.scroll / (float) menuScrollMax;
+            scrollPaint.setColor(0xFF282321); c.drawRect(bx, by0, bx + 2 * s, by0 + bh2, scrollPaint);
+            scrollPaint.setColor(0xFFF48C28); c.drawRect(bx, ty, bx + 2 * s, ty + th, scrollPaint);
+        }
         // pictures on RADIO rows (the Picture choice): a piece of the game as each choice shows it
         for (int i = 0; i < m.items.size(); i++) {
             PixelMenu.Item it = m.items.get(i);
             if (it.preview < 0 || it.preview >= previews.length || previews[it.preview] == null) continue;
             int[] r = m.previewRect(i);
-            tmpDst.set(x + r[0] * s, y + r[1] * s, x + (r[2] + 1) * s, y + (r[3] + 1) * s);
+            int dy = r[1] >= menuBodyTop ? -m.scroll : 0;
+            if (r[1] + dy < menuBodyTop || r[3] + dy >= menuBodyTop + menuBodyVis) continue;   // scrolled out of view
+            tmpDst.set(x + r[0] * s, y + (r[1] + dy) * s, x + (r[2] + 1) * s, y + (r[3] + 1 + dy) * s);
             pickerPaint.setFilterBitmap(it.preview != Prefs.PICTURE_SHARP);
             c.drawBitmap(previews[it.preview], null, tmpDst, pickerPaint);
             pickerPaint.setFilterBitmap(false);
         }
     }
 
+    /**
+     * Pixel size for a window: as big as fits (sized to the screen, not to the deck, so small handheld screens get
+     * readable windows). Whole pixels from 3x up keep the pixel art even; below that the exact fit is used, as
+     * every bit of size counts there.
+     */
+    private static float fitScale(float a, float b) {
+        float s = Math.min(a, b);
+        if (s >= 3) return (float) Math.floor(s);
+        return Math.max(1f, s);
+    }
+
+    // a scrolling window: what is shown (art pixels)
+    private int menuBodyTop, menuBodyVis, menuScrollMax, menuFullH, menuVisH;
+    /** The controller moved the cursor: keep its row in view. */
+    private boolean menuFollow = true;
+    private float menuDragY; private int menuDragScroll; private boolean menuDragging;
+    private final Rect tmpSrc = new Rect();
+    private final Paint scrollPaint = new Paint();
+
+    /** Window art y under screen y (the rows may be scrolled). */
+    private float menuArtY(PixelMenu m, float y, float s) {
+        float ya = (y - menuDst.top) / s;
+        if (ya < menuBodyTop) return ya;
+        if (ya < menuBodyTop + menuBodyVis) return ya + m.scroll;
+        return ya + (menuFullH - menuVisH);
+    }
+
+    /** A pixel scale that makes the 5-pixel font about 2.4 mm tall on this screen (8x on a typical phone). */
+    private float readScale() { return 3.0f * dp; }
+
     private boolean menuTouchEvent(int act, float x, float y) {
         PixelMenu m = topMenu();
         if (m == null) return false;
         float s = menuScale > 0 ? menuScale : deck.artPx;
-        int row = menuDst.contains(x, y) ? m.itemAt((x - menuDst.left) / s, (y - menuDst.top) / s) : -1;
+        int row = menuDst.contains(x, y) ? m.itemAt((x - menuDst.left) / s, menuArtY(m, y, s)) : -1;
+        if (act == MotionEvent.ACTION_MOVE) {
+            // drag to scroll a long window
+            if (menuScrollMax <= 0 || menuTouch == -3 || menuTouch == -2 && !menuDragging) return true;
+            if (!menuDragging && Math.abs(y - menuDragY) > 8 * dp) menuDragging = true;
+            if (menuDragging) {
+                menuFollow = false;
+                m.scroll = Math.max(0, Math.min(menuScrollMax, menuDragScroll - Math.round((y - menuDragY) / s)));
+                invalidate();
+            }
+            return true;
+        }
         if (act == MotionEvent.ACTION_DOWN || act == MotionEvent.ACTION_POINTER_DOWN) {
+            menuDragY = y; menuDragScroll = m.scroll; menuDragging = false; menuFollow = false;
             menuTouch = menuDst.contains(x, y) ? row : -3;
+            if (menuTouch == -2) menuTouch = -1;   // on the window, not on a row: may still drag
             if (row >= 0) { m.cursor = row; menuController = false; menuChanged(); }
         } else if (act == MotionEvent.ACTION_UP || act == MotionEvent.ACTION_POINTER_UP) {
             int arrow = row >= 0 ? m.arrowAt(row, (x - menuDst.left) / s) : 0;
+            if (menuDragging) { menuDragging = false; menuTouch = -2; return true; }   // it was a scroll, not a tap
             if (menuTouch >= 0 && row == menuTouch && arrow != 0) { m.cursor = row; menuSide(arrow); }   // tapped "<" or ">"
             else if (menuTouch >= 0 && row == menuTouch) menuActivate();
             else if (menuTouch == -3 && !menuDst.contains(x, y) && !m.editor) closeMenu();
@@ -629,8 +709,8 @@ final class GameView extends View {
             for (String l : m.message) { a.text(l, 1 + PixelMenu.W / 2 - PixelArt.textWidth(l, 1) / 2, y, PixelArt.BONE, 1); y += 7; }
             toastBmp = Bitmap.createBitmap(a.px, a.w, a.h, Bitmap.Config.ARGB_8888);
         }
-        float s = Math.min(deck.artPx, getWidth() * 0.9f / toastBmp.getWidth());
-        if (s >= 2) s = (float) Math.floor(s);
+        // a note: as big as the deck's pixels, or a size that suits the screen (small handheld screens)
+        float s = fitScale(getWidth() * 0.9f / toastBmp.getWidth(), readScale());
         float w = toastBmp.getWidth() * s, h = toastBmp.getHeight() * s, x = (getWidth() - w) / 2, y = gameRect.top + gameRect.height() * 0.08f;
         tmpDst.set(x, y, x + w, y + h);
         c.drawBitmap(toastBmp, null, tmpDst, pickerPaint);
@@ -805,9 +885,8 @@ final class GameView extends View {
             pickerDirty = false;
         }
         c.drawRect(gameRect, dimPaint);
-        // the window's pixel size: the deck's, or smaller if the window would not fit on the screen
-        float s = Math.min(deck.artPx, Math.min(getWidth() * 0.96f / pickerBmp.getWidth(), getHeight() * 0.96f / pickerBmp.getHeight()));
-        if (s >= 2) s = (float) Math.floor(s);
+        // the window's pixel size: as big as fits the screen
+        float s = fitScale(Math.min(getWidth() * 0.96f / pickerBmp.getWidth(), getHeight() * 0.96f / pickerBmp.getHeight()), readScale());
         pickerScale = s;
         float w = pickerBmp.getWidth() * s, h = pickerBmp.getHeight() * s;
         float x = Math.max(0, Math.min(getWidth() - w, gameRect.centerX() - w / 2)), y = Math.max(0, Math.min(getHeight() - h, gameRect.centerY() - h / 2));
@@ -908,7 +987,11 @@ final class GameView extends View {
             return true;
         }
         if (!menus.isEmpty() && topMenu().editor) { editorTouch(e); return true; }
-        if (!menus.isEmpty()) { if (act != MotionEvent.ACTION_MOVE) menuTouchEvent(act, e.getX(idx), e.getY(idx)); return true; }
+        if (!menus.isEmpty()) {
+            if (act == MotionEvent.ACTION_MOVE) { if (e.getPointerCount() > 0) menuTouchEvent(act, e.getX(0), e.getY(0)); }
+            else menuTouchEvent(act, e.getX(idx), e.getY(idx));
+            return true;
+        }
         if (pickerOn && act != MotionEvent.ACTION_MOVE) { pickerTouch(act, e.getPointerId(idx), e.getX(idx), e.getY(idx)); return true; }
         if (pickerOn) return true;
         switch (act) {

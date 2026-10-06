@@ -102,6 +102,12 @@ final class PixelMenu {
         return x < mid ? -1 : 1;
     }
 
+    /** How far the rows are scrolled (art pixels), when the window is taller than the screen. */
+    int scroll;
+    /** Where the rows start (art pixels, room for a gap line above the first), and where they end. */
+    int bodyTop() { return itemsTop() - 4; }
+    int bodyEnd() { return items.isEmpty() ? itemsTop() : rowTop(items.size() - 1) + rowH(items.get(items.size() - 1)) + 2; }
+
     void move(int d) {
         if (items.isEmpty()) return;
         int n = items.size(), c = cursor < 0 ? (d > 0 ? -1 : n) : cursor;

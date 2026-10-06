@@ -1,5 +1,15 @@
 # Changes
 
+## 2.3
+- Edit touch controls, portrait: L, the wait button (hourglass) and R are now separate groups (as in landscape),
+  so each can go where you like, and they can be made 80 to 120 % of their size. Making them smaller frees room
+  for a bigger cross. A layout saved by 2.2 keeps them where you had put them.
+- Windows (settings, the extras window, questions, stats, the weapon picker, notes) are sized to the screen
+  you are using: big enough to read on it (the letters about 2.4 mm tall), instead of the size of the control
+  deck's pixels. On small handheld screens such as the RG Rotate they were too small to read.
+- A window taller than the screen shows part of its rows and scrolls: drag it with a finger, or move with the
+  d-pad (the list follows the cursor). A bar on the right shows where you are.
+
 ## 2.2.1
 - Fixed: in Edit touch controls the cross could not be made smaller. Tapping the size only went up, and in
   portrait the cross has no room above 110 %, so it never came back down. Now the size shows "< 110% >": tap
