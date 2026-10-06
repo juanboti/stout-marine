@@ -219,9 +219,9 @@ final class GameView extends View {
             int[] e = curEdits().get(g.id);
             final int size = e != null ? e[2] : 100;
             PixelMenu.Item it = m.add(PixelMenu.CHOICE, Icons.I_SCR, "SIZE: " + Deck.groupName(g.id), size + "%", null);
-            it.left = new Runnable() { public void run() { resize(g.id, size - 10); } };
-            it.right = new Runnable() { public void run() { resize(g.id, size + 10); } };
-            it.act = new Runnable() { public void run() { resize(g.id, size >= Deck.SIZE_MAX ? Deck.SIZE_MIN : size + 10); } };
+            it.left = new Runnable() { public void run() { resize(g.id, size - 10, true); } };
+            it.right = new Runnable() { public void run() { resize(g.id, size + 10, true); } };
+            it.act = new Runnable() { public void run() { bounceSize(g.id, size); } };
         } else m.add(PixelMenu.INFO, null, g == null ? "NOTHING CHOSEN" : Deck.groupName(g.id), g == null ? "" : "SAME SIZE", null);
         m.add(PixelMenu.OPEN, Icons.I_REDO, "SWAP LEFT / RIGHT", null, new Runnable() { public void run() { swapSides(); } });
         m.add(PixelMenu.BUTTON, null, "RESET TO DEFAULT", null, new Runnable() { public void run() {
@@ -231,14 +231,28 @@ final class GameView extends View {
         menuChanged();
     }
 
-    /** Changes a group's size; a size with no room is not kept. */
-    private void resize(String id, int size) {
-        size = Math.max(Deck.SIZE_MIN, Math.min(Deck.SIZE_MAX, size));
-        int[] old = curEdits().get(id);
-        int[] e = old != null ? old.clone() : new int[]{0, 0, 100};
-        e[2] = size;
-        if (!deck.placeNear(getWidth(), getHeight(), id, e, 8)) toast("No room for that size here.");
+    /** Which way tapping the size row goes next (+1 bigger, -1 smaller); it turns round at the ends. */
+    private int sizeDir = 1;
+
+    /** Changes a group's size; a size with no room (or out of range) is not kept. Returns true if it changed. */
+    private boolean resize(String id, int size, boolean tell) {
+        boolean ok = false;
+        if (size >= Deck.SIZE_MIN && size <= Deck.SIZE_MAX) {
+            int[] old = curEdits().get(id);
+            int[] e = old != null ? old.clone() : new int[]{0, 0, 100};
+            e[2] = size;
+            ok = deck.placeNear(getWidth(), getHeight(), id, e, 8);
+        }
+        if (!ok && tell) toast(size > Deck.SIZE_MAX ? "That's the biggest size." : size < Deck.SIZE_MIN ? "That's the smallest size." : "No room for that size here.");
         relayout(); saveEdits(); fillEditMenu();
+        return ok;
+    }
+
+    /** Tapping the size row: up a step until the biggest size that fits, then back down to the smallest, and so on. */
+    private void bounceSize(String id, int size) {
+        if (resize(id, size + 10 * sizeDir, false)) return;
+        sizeDir = -sizeDir;
+        resize(id, size + 10 * sizeDir, true);
     }
 
     /** Mirrors every group left / right (left-handed and back); each goes to its mirrored place or the nearest free one. */
@@ -257,6 +271,7 @@ final class GameView extends View {
             editOnWindow = menuDst.contains(x, y);
             if (editOnWindow) { menuTouchEvent(act, x, y); return; }
             Deck.Group g = deck.groupAt(x / deck.artPx, y / deck.artPx);
+            if (g == null || !g.id.equals(deck.selected)) sizeDir = 1;   // a new choice: tapping its size starts upwards
             deck.selected = g != null ? g.id : null;
             deck.dragging = g != null ? g.id : null;
             if (g != null) {
@@ -564,7 +579,9 @@ final class GameView extends View {
             menuTouch = menuDst.contains(x, y) ? row : -3;
             if (row >= 0) { m.cursor = row; menuController = false; menuChanged(); }
         } else if (act == MotionEvent.ACTION_UP || act == MotionEvent.ACTION_POINTER_UP) {
-            if (menuTouch >= 0 && row == menuTouch) menuActivate();
+            int arrow = row >= 0 ? m.arrowAt(row, (x - menuDst.left) / s) : 0;
+            if (menuTouch >= 0 && row == menuTouch && arrow != 0) { m.cursor = row; menuSide(arrow); }   // tapped "<" or ">"
+            else if (menuTouch >= 0 && row == menuTouch) menuActivate();
             else if (menuTouch == -3 && !menuDst.contains(x, y) && !m.editor) closeMenu();
             menuTouch = -2;
         } else if (act == MotionEvent.ACTION_CANCEL) menuTouch = -2;

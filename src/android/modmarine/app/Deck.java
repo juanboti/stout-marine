@@ -51,7 +51,7 @@ final class Deck {
     String[][] legend;
     int legendX, legendY, legendW, legendH;
 
-    /** XP bar (Diablo style): shown when xpOn; level, XP in this level and the XP the level needs (level 0 = not known yet). */
+    /** XP bar: shown when xpOn; level, XP in this level and the XP the level needs (level 0 = not known yet). */
     boolean xpOn = true;
     int xpLevel, xp, xpNext;
     /** Where it goes (art pixels): bar x0..x1 from y0 (groove xpInner high), level socket, the "to next level" text. */
@@ -621,7 +621,7 @@ final class Deck {
         if (label != null) { lx0 = (gx0 + gx1) / 2 - tw / 2 - 3; lx1 = lx0 + tw + 5; }
         // bright leading edge, except behind the numbers
         if (fill > 0 && fill < w && (gx0 + fill - 1 < lx0 || gx0 + fill - 1 > lx1)) a.vline(gx0 + fill - 1, gy0, gy1, GOLD_EDGE);
-        // ten segments, like Diablo's bar (no notch behind the numbers)
+        // ten segments (no notch behind the numbers)
         for (int t = 1; t < 10; t++) {
             int x = gx0 + w * t / 10;
             if (x >= lx0 && x <= lx1) continue;

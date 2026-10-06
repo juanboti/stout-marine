@@ -86,6 +86,22 @@ final class PixelMenu {
         return -1;
     }
 
+    /** A value row with both a "less" and a "more" (drawn "< value >"). */
+    static boolean twoWay(Item it) { return it.kind == CHOICE && it.left != null && it.right != null; }
+
+    /**
+     * Which arrow of row i the window art pixel x is on: -1 the left half of "< value >" (less), +1 the right half
+     * (more), 0 elsewhere on the row (the label).
+     */
+    int arrowAt(int i, float x) {
+        if (i < 0 || i >= items.size() || !twoWay(items.get(i))) return 0;
+        Item it = items.get(i);
+        int x1 = W - PAD + 1, tw = PixelArt.textWidth(it.value, 1);
+        int v0 = x1 - 15 - tw - 8, mid = x1 - 9 - tw / 2;   // some room left of the "<" for a finger
+        if (x < v0) return 0;
+        return x < mid ? -1 : 1;
+    }
+
     void move(int d) {
         if (items.isEmpty()) return;
         int n = items.size(), c = cursor < 0 ? (d > 0 ? -1 : n) : cursor;
@@ -142,8 +158,14 @@ final class PixelMenu {
                         int k = it.on ? sx1 - 6 : sx0 + 1; a.rect(k, t + 3, k + 5, t + h - 4, it.on ? OR2 : D5);
                     } else if (it.kind == CHOICE) {
                         int tw = PixelArt.textWidth(it.value, 1);
-                        a.text(it.value, x1 - 3 - tw, t + 3, OR, 1);
-                        a.blitCenter(Icons.CHEV_L, x1 - 7 - tw - 2, t + h / 2, R3, false);
+                        if (twoWay(it)) {   // "< value >": both arrows can be tapped
+                            a.text(it.value, x1 - 9 - tw, t + 3, OR, 1);
+                            a.blitCenter(Icons.CHEV_L, x1 - 13 - tw - 2, t + h / 2, sel ? OR2 : R3, false);
+                            a.blitCenter(Icons.CHEV_R, x1 - 5, t + h / 2, sel ? OR2 : R3, false);
+                        } else {
+                            a.text(it.value, x1 - 3 - tw, t + 3, OR, 1);
+                            a.blitCenter(Icons.CHEV_L, x1 - 7 - tw - 2, t + h / 2, R3, false);
+                        }
                     } else {
                         if (!it.value.isEmpty()) {
                             int tw = PixelArt.textWidth(it.value, 1);

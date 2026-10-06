@@ -1,5 +1,13 @@
 # Changes
 
+## 2.2.1
+- Fixed: in Edit touch controls the cross could not be made smaller. Tapping the size only went up, and in
+  portrait the cross has no room above 110 %, so it never came back down. Now the size shows "< 110% >": tap
+  the left arrow for smaller and the right arrow for bigger, or tap the row itself to go up a step at a time to
+  the biggest size that fits, then back down to 80 %.
+- Settings rows with a value (picture, mini-map, vibration, handheld) also show both arrows, and each arrow can
+  be tapped.
+
 ## 2.2
 - Edit touch controls (settings): drag groups of buttons (the cross, the fire button, L / R, the top row; in
   landscape also the wait button and the weapon slot) to new places on the control area, and make the cross or
@@ -13,7 +21,7 @@
   settings and the d-pad and sticks always move, so nobody can lock themselves out. Reset to default.
 
 ## 2.1
-- XP bar (Diablo style), on by default: your level in a round socket, a gold bar with ten segments, the XP you
+- XP bar, on by default: your level in a round socket, a gold bar with ten segments, the XP you
   have in this level, the XP the level needs, and how much is left until the next level. The numbers are the
   game's own, read from the emulated phone's memory without changing anything (the game keeps XP per level,
   so the bar fills from empty to the next level). Portrait: a strip right under the game picture. Landscape:

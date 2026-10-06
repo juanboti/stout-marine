@@ -28,18 +28,16 @@ final class About {
 
     /** Shown once after an update (keep in step with CHANGES.md). */
     static final String WHATS_NEW =
-          "\u2022 New: move the touch controls. Settings, Edit touch controls: drag the cross, the fire button and the other "
-        + "buttons where you like them, make the cross or fire button bigger or smaller, or swap left / right for "
-        + "left-handed play. Reset to default puts everything back.\n\n"
-        + "\u2022 New: controller buttons. Settings, Controller buttons: choose an action, then press the button you want "
-        + "for it. Start always opens the settings.\n\n"
-        + "\u2022 From 2.1: the XP bar, and the extras start on.";
+          "\u2022 Fixed: the cross (and the fire button) can be made smaller again. In Edit touch controls, tap < for "
+        + "smaller and > for bigger, or tap the size to go up and back down. Rows with a value in the settings have "
+        + "both arrows too.\n\n"
+        + "\u2022 From 2.2: edit touch controls (move, resize, swap left / right) and controller buttons.";
 
     /** The same, short enough for the pixel window (capitals only, no bullets). */
     static final String WHATS_NEW_SHORT =
-          "- EDIT TOUCH CONTROLS: MOVE AND RESIZE THE BUTTONS, OR SWAP LEFT / RIGHT.\n"
-        + "- CONTROLLER BUTTONS: PUT ANY ACTION ON ANY BUTTON.\n\n"
-        + "BOTH ARE IN THE SETTINGS (THE GEAR, OR HOLD THE MENU BUTTON).";
+          "- FIXED: THE CROSS CAN BE MADE SMALLER AGAIN. TAP < FOR SMALLER, > FOR BIGGER.\n"
+        + "- SETTINGS ROWS WITH A VALUE HAVE BOTH ARROWS.\n\n"
+        + "FROM 2.2: EDIT TOUCH CONTROLS AND CONTROLLER BUTTONS (IN THE SETTINGS).";
 
     static void showWhatsNew(Activity a) {
         new AlertDialog.Builder(a, android.R.style.Theme_DeviceDefault_Dialog_Alert)

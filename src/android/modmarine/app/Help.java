@@ -55,7 +55,8 @@ final class Help {
         + "even if you turn the phone. To get your controls back, tap the glowing button or <b>X CLOSE</b>.",
 
         "<h4>Settings (the gear button)</h4>"
-        + "Tap a row to use it; on rows with a value, tap again (or press left / right on a controller) to change it. "
+        + "Tap a row to use it. Rows with a value show <b>&lt; value &gt;</b>: tap the left arrow for the previous choice and "
+        + "the right arrow for the next (left / right on a controller). "
         + "Tap outside the window, or press <b>B</b>, to close.<br>"
         + "<b>Save now</b> &mdash; saves your game in one tap. It uses the game's own menu and its <b>Save Game</b>, "
         + "exactly as if you had done it yourself, so it only works while you are walking around (not in a fight, "
@@ -112,7 +113,9 @@ final class Help {
 
         "<h4>Move the touch controls</h4>"
         + "Settings, <b>Edit touch controls</b>: drag a group of buttons (the cross, the fire button, the L / R buttons, "
-        + "the top row) to where your thumbs like them. Tap the cross or the fire button, then change its size (80 to 140%). "
+        + "the top row) to where your thumbs like them. Tap the cross or the fire button, then change its size (80 to 140%): "
+        + "tap <b>&lt;</b> for smaller or <b>&gt;</b> for bigger, or tap the size row itself to go up a step at a time to the "
+        + "biggest size that fits, then back down. "
         + "<b>Swap left / right</b> mirrors everything, for left-handed play. Portrait and landscape are kept separately. "
         + "<b>Reset to default</b> puts everything back. Buttons can't overlap or go onto the game picture.",
     };
