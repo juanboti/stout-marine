@@ -31,7 +31,7 @@ exported to a `.zip` and imported again (settings, Export / Import saved games).
 | Touch controls (phone) | Handheld mode | Door codes on a handheld |
 | :---: | :---: | :---: |
 | <img src="apk/res/drawable-nodpi/help_controls.png" width="260" alt="Touch controls"> | <img src="apk/res/drawable-nodpi/help_handheld.png" width="260" alt="Handheld mode"> | <img src="apk/res/drawable-nodpi/help_bigkeypad.png" width="260" alt="Big keypad"> |
-| 1 menu, 2 gear (settings), 3 weapon, 4 keypad, 5 map, 6 cross (walk, turn), 7 L / R side-step, 8 wait, 9 fire, 10 XP bar | the game in the middle at a sharp size, a button guide beside it | big number keys, worked with the d-pad and A |
+| 1 menu, 2 gear (settings), 3 weapon, 4 keypad, 5 map, 6 cross (walk, turn), 7 L / R side-step, 8 wait, 9 fire, 10 XP bar | the game displayed in the middle at a sharp size, buttons beside it | big sized number keys, works with the d-pad and A button |
 
 ### Settings
 
@@ -50,7 +50,7 @@ start a short tour points out the touch buttons.
 
 ### XP bar
 
-A Diablo-style XP bar (number 10 in the first picture): your level in the red circle, a gold bar that fills
+XP bar (number 10 in the first picture): your level in the red circle, a gold bar that fills
 as you earn XP, and the numbers, for example "53 / 80 XP, 27 TO LEVEL 2". They are the game's own numbers,
 read from the emulated phone's memory without changing anything. In landscape it sits in the right panel,
 on handhelds at the top of the left panel. It can be turned off in the settings.
